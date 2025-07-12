@@ -50,8 +50,12 @@ class AudioPlayer:
     
     def restart(self):
         """Restart audio from the beginning"""
-        if self.audio_player and self.audio_loaded:
+        if self.audio_player and self.audio_loaded and self.original_audio_file:
+            # Clean up current player
             self.audio_player.delete()
+
+            # Reload the audio source fresh (this resets the position to the beginning)
+            self.audio_source = pyglet.media.load(self.original_audio_file)
             self.audio_player = pyglet.media.Player()
             self.audio_player.queue(self.audio_source)
             self.audio_player.play()
