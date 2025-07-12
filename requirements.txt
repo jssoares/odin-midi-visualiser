@@ -1,0 +1,13 @@
+# Core visualization
+pyglet>=2.0.0
+
+# MIDI processing  
+mido>=1.3.0
+
+# Audio analysis
+librosa>=0.10.0
+numpy>=1.24.0
+
+# Video recording
+opencv-python>=4.8.0
+Pillow>=10.0.0
