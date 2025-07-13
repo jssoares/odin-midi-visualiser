@@ -46,6 +46,57 @@ class Settings:
     FONT_SIZE_EVENT   = 10
     LABEL_COLOR       = (200, 200, 200, 255)
 
+    # UI Panel Layout (clean, geometric spacing)
+    PANEL_MARGIN       = 30     # Distance from screen edges
+    PANEL_SPACING      = 20     # Space between panels
+    PANEL_WIDTH        = 280    # Fixed width for consistency
+    PANEL_HEIGHT       = 180    # Fixed height for clean rectangles
+    PANEL_HEIGHT_AUDIO = 210    # Fixed height for clean rectangles
+    PANEL_PADDING      = 15     # Internal padding inside panels
+    PANEL_TITLE_HEIGHT = 25     # Height reserved for panel titles
+
+    # Panel Positions (calculated from margins)
+    PANEL_TOP_Y    = WINDOW_HEIGHT - PANEL_MARGIN - PANEL_HEIGHT
+    PANEL_BOTTOM_Y = PANEL_MARGIN + 30
+    PANEL_LEFT_X   = PANEL_MARGIN  
+    PANEL_RIGHT_X  = WINDOW_WIDTH - PANEL_MARGIN - PANEL_WIDTH
+
+    # Clean Color Palette (muted, professional)
+    PANEL_BACKGROUND  = (5, 8, 12, 100)        # Darker background
+    PANEL_BORDER      = (120, 160, 200, 220)   # Brighter borders
+    PANEL_GLOW        = (80, 120, 160, 60)     # Subtle blue glow
+    PANEL_TITLE_COLOR = (255, 255, 255, 255)   # Pure white titles
+    PANEL_TEXT_COLOR  = (240, 250, 255, 255)   # Higher contrast text
+    PANEL_ACCENT      = (100, 150, 200, 255)   # Blue accent for highlights
+
+    # Monospace Font Settings (2001 computer aesthetic)
+    UI_FONT_FAMILY   = "Consolas"     # Primary choice
+    UI_FONT_FALLBACK = "Courier New"  # Fallback monospace
+    UI_TITLE_SIZE    = 11             # Panel titles
+    UI_DATA_SIZE     = 9              # Data text
+    UI_SMALL_SIZE    = 8              # Secondary info
+
+    # Border and Glow Settings (minimal, clean)
+    PANEL_BORDER_WIDTH  = 1  # Ultra-thin borders
+    PANEL_GLOW_WIDTH    = 3  # Subtle glow effect
+    PANEL_CORNER_RADIUS = 0  # Sharp, geometric corners
+
+    # Panel Content Layout
+    LINES_PER_PANEL     = 6   # Max lines per panel
+    LINE_HEIGHT         = 14  # Spacing between lines
+    TITLE_BOTTOM_MARGIN = 8   # Space below panel titles
+
+    # Holographic Animation Settings (subtle, not distracting)
+    PANEL_PULSE_ENABLED   = True
+    PANEL_PULSE_SPEED     = 0.3   # Cycles per second (slow breathing)
+    PANEL_PULSE_INTENSITY = 0.15  # How much opacity varies (subtle)
+    PANEL_FADE_SPEED      = 4.0   # How fast panels fade in/out on data changes
+
+    # Geometric Precision (2001 aesthetic)
+    PANEL_PERFECT_SPACING = True    # Ensures pixel-perfect alignment
+    PANEL_DATA_ALIGNMENT  = 'left'  # Clean left alignment for data
+    PANEL_TITLE_ALIGNMENT = 'left'  # Titles align with data
+
     # File paths
     PROJECT_ROOT      = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     ASSETS_DIR        = os.path.join(PROJECT_ROOT, "assets")

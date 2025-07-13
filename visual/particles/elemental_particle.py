@@ -8,7 +8,7 @@ class ElementalParticle:
         self.target_x, self.target_y = initial_target
         self.odin_node = odin_node
         self.color = color
-        self.circle = shapes.Circle(self.x, self.y, radius=1, color=tuple(color), batch=batch)
+        self.circle = shapes.Circle(self.x, self.y, radius=2, color=tuple(color), batch=batch)
         self.speed = random.uniform(40, 100)
         self.alive = True
         
