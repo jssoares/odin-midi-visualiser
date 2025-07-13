@@ -1,8 +1,7 @@
 import time
 import math
 from pyglet import text
-from shapes import ElementalShape
-from particles import ElementalParticle, ExplosionParticle
+from visual.shapes import ElementalShape
 
 class ElementalNode:
     """Enhanced node class for elements with audio-reactive shapes"""

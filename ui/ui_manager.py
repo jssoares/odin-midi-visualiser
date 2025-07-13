@@ -1,7 +1,7 @@
 
 import time
 from config.settings import Settings
-from pyglet import shapes, text
+from pyglet          import shapes, text
 
 class UIManager:
     def __init__(self, window_width, window_height, ui_batch, grid_batch):

@@ -21,7 +21,14 @@ class Settings:
         (0, -1, 2, "FIRE", [220, 20, 20]),       # Top (center_y - distance)
         (-1, 0, 3, "WATER", [0, 191, 255])       # Left (center_x - distance)
     ]
-    
+
+    # Background pattern settings
+    BACKGROUND_PATTERN_ENABLED = True
+    BACKGROUND_PATTERN_OPACITY = 60  # Very subtle
+    BACKGROUND_PATTERN_SIZE = 30     # Size of pattern elements
+    BACKGROUND_PATTERN_SPACING = 40 # Distance between pattern elements
+    BACKGROUND_PATTERN_PULSE_INTENSITY = 0.3  # How much it pulses (0.0 to 1.0)
+
     # Audio settings
     DEFAULT_SAMPLE_RATE = 44100
     FFT_WINDOW_SIZE = 2048

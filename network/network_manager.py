@@ -1,8 +1,8 @@
 import math
 import random
-from config.settings import Settings
-from particles import ElementalParticle
-from nodes import OdinNode, ElementalNode, Connection
+from config.settings  import Settings
+from visual.particles import ElementalParticle
+from nodes            import OdinNode, ElementalNode, Connection
 
 class NetworkManager:
     def __init__(self, window_width, window_height, batch, visualizer_ref):
