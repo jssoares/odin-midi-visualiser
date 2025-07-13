@@ -41,12 +41,15 @@ class UIManager:
             Settings.PANEL_LEFT_X, Settings.PANEL_TOP_Y, 
             Settings.PANEL_WIDTH, Settings.PANEL_HEIGHT, "SYSTEM"
         )
-        
+
+        # Calculate the offset to align bottoms of both panels
+        audio_panel_y_offset = Settings.PANEL_HEIGHT_AUDIO - Settings.PANEL_HEIGHT
+
         # Top-right: Audio Analysis
         # Audio panel is taller
         self.panels['audio'] = self.create_clean_panel(
-            Settings.PANEL_RIGHT_X, Settings.PANEL_TOP_Y,
-            Settings.PANEL_WIDTH, Settings.PANEL_HEIGHT, "AUDIO"
+            Settings.PANEL_RIGHT_X, Settings.PANEL_TOP_Y - audio_panel_y_offset,
+            Settings.PANEL_WIDTH, Settings.PANEL_HEIGHT_AUDIO, "AUDIO"
         )
         
         # Bottom-left: MIDI Data
@@ -67,7 +70,7 @@ class UIManager:
         )
         
         self.panel_labels['audio'] = self.create_panel_labels(
-            Settings.PANEL_RIGHT_X, Settings.PANEL_TOP_Y, "AUDIO", 8, Settings.PANEL_HEIGHT
+            Settings.PANEL_RIGHT_X, Settings.PANEL_TOP_Y - audio_panel_y_offset, "AUDIO", 11, Settings.PANEL_HEIGHT_AUDIO
         )
         
         self.panel_labels['midi'] = self.create_panel_labels(
@@ -84,7 +87,7 @@ class UIManager:
         self.update_audio_panel(audio_analyzer)
         self.update_midi_panel(midi_processor)
         self.update_particles_panel(network_manager, midi_processor)
-        
+
         # Apply subtle holographic animations
         self.update_panel_animations(1/60.0)  # Assume 60fps
         self.update_fade_effects()
@@ -111,14 +114,17 @@ class UIManager:
     def update_audio_panel(self, audio_analyzer):
         """Update top-right panel with complete audio frequency and panning data"""
         audio_data = [
-            f"EARTH FRQ:  {audio_analyzer.element_frequency_levels['EARTH']:.4f}",
-            f"WATER FRQ:  {audio_analyzer.element_frequency_levels['WATER']:.4f}",
-            f"FIRE  FRQ:  {audio_analyzer.element_frequency_levels['FIRE']:.4f}",
-            f"WIND  FRQ:  {audio_analyzer.element_frequency_levels['WIND']:.4f}",
-            f"EARTH PAN: {audio_analyzer.element_panning.get('EARTH', 0.0):+.4f}",
-            f"WATER PAN: {audio_analyzer.element_panning.get('WATER', 0.0):+.4f}",
-            f"FIRE  PAN: {audio_analyzer.element_panning.get('FIRE', 0.0):+.4f}",
-            f"WIND  PAN: {audio_analyzer.element_panning.get('WIND', 0.0):+.4f}"
+            f"[FREQUENCY]",
+            f"EARTH :  {audio_analyzer.element_frequency_levels['EARTH']:.4f}",
+            f"WIND  :  {audio_analyzer.element_frequency_levels['WIND']:.4f}",
+            f"FIRE  :  {audio_analyzer.element_frequency_levels['FIRE']:.4f}",
+            f"WATER :  {audio_analyzer.element_frequency_levels['WATER']:.4f}",
+            f"",
+            f"[PANNING]",
+            f"EARTH : {audio_analyzer.element_panning.get('EARTH', 0.0):+.4f}",
+            f"WIND  : {audio_analyzer.element_panning.get('WIND', 0.0):+.4f}",
+            f"FIRE  : {audio_analyzer.element_panning.get('FIRE', 0.0):+.4f}",
+            f"WATER : {audio_analyzer.element_panning.get('WATER', 0.0):+.4f}",
         ]
         
         for i, label in enumerate(self.panel_labels['audio']):

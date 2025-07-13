@@ -51,6 +51,7 @@ class Settings:
     PANEL_SPACING      = 20     # Space between panels
     PANEL_WIDTH        = 280    # Fixed width for consistency
     PANEL_HEIGHT       = 180    # Fixed height for clean rectangles
+    PANEL_HEIGHT_AUDIO = 210    # Fixed height for clean rectangles
     PANEL_PADDING      = 15     # Internal padding inside panels
     PANEL_TITLE_HEIGHT = 25     # Height reserved for panel titles
 
@@ -87,7 +88,7 @@ class Settings:
 
     # Holographic Animation Settings (subtle, not distracting)
     PANEL_PULSE_ENABLED   = True
-    PANEL_PULSE_SPEED     = 0.8   # Cycles per second (slow breathing)
+    PANEL_PULSE_SPEED     = 0.3   # Cycles per second (slow breathing)
     PANEL_PULSE_INTENSITY = 0.15  # How much opacity varies (subtle)
     PANEL_FADE_SPEED      = 4.0   # How fast panels fade in/out on data changes
 
