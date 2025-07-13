@@ -13,6 +13,9 @@ class UIManager:
         self.grid_batch = grid_batch
         self.window_width = window_width
         self.window_height = window_height
+        self.panels = {}           # Store panel background shapes
+        self.panel_labels = {}     # Store labels organized by panel
+        self.clean_font = None     # Store working font name
 
     def create_grid(self):
         grid_color   = Settings.GRID_COLOR
@@ -24,58 +27,144 @@ class UIManager:
             shapes.Line(0, y, self.window_width, y, color=grid_color, batch=self.grid_batch)
     
     def create_ui(self):
-        for i in range(Settings.INFO_LABEL_COUNT):
-            label = text.Label(
-                '', font_size=Settings.FONT_SIZE_INFO, color=Settings.LABEL_COLOR,
-                x=10, y=self.window_height - 30 - i * 20, batch=self.ui_batch
-            )
-            self.info_labels.append(label)
+        # Setup font first
+        self.setup_clean_font()
         
-        for i in range(Settings.EVENT_LABEL_COUNT):
-            label = text.Label(
-                '', font_size=Settings.FONT_SIZE_EVENT, color=Settings.LABEL_COLOR,
-                x=10, y=self.window_height - 200 - i * 16, batch=self.ui_batch
-            )
-            self.event_labels.append(label)
+        # Create panels
+        # Top-left: System Status
+        self.panels['system'] = self.create_clean_panel(
+            Settings.PANEL_LEFT_X, Settings.PANEL_TOP_Y, 
+            Settings.PANEL_WIDTH, Settings.PANEL_HEIGHT, "SYSTEM"
+        )
+        
+        # Top-right: Audio Analysis
+        # Audio panel is taller
+        self.panels['audio'] = self.create_clean_panel(
+            Settings.PANEL_RIGHT_X, Settings.PANEL_TOP_Y,
+            Settings.PANEL_WIDTH, Settings.PANEL_HEIGHT, "AUDIO"
+        )
+        
+        # Bottom-left: MIDI Data
+        self.panels['midi'] = self.create_clean_panel(
+            Settings.PANEL_LEFT_X, Settings.PANEL_BOTTOM_Y,
+            Settings.PANEL_WIDTH, Settings.PANEL_HEIGHT, "MIDI"
+        )
+        
+        # Bottom-right: Particle System
+        self.panels['particles'] = self.create_clean_panel(
+            Settings.PANEL_RIGHT_X, Settings.PANEL_BOTTOM_Y,
+            Settings.PANEL_WIDTH, Settings.PANEL_HEIGHT, "PARTICLES"
+        )
+        
+        # Create labels for each panel
+        self.panel_labels['system'] = self.create_panel_labels(
+            Settings.PANEL_LEFT_X, Settings.PANEL_TOP_Y, "SYSTEM", 6, Settings.PANEL_HEIGHT
+        )
+        
+        self.panel_labels['audio'] = self.create_panel_labels(
+            Settings.PANEL_RIGHT_X, Settings.PANEL_TOP_Y, "AUDIO", 8, Settings.PANEL_HEIGHT
+        )
+        
+        self.panel_labels['midi'] = self.create_panel_labels(
+            Settings.PANEL_LEFT_X, Settings.PANEL_BOTTOM_Y, "MIDI", 8, Settings.PANEL_HEIGHT
+        )
+        
+        self.panel_labels['particles'] = self.create_panel_labels(
+            Settings.PANEL_RIGHT_X, Settings.PANEL_BOTTOM_Y, "PARTICLES", 6, Settings.PANEL_HEIGHT
+        )
 
     def update_ui(self, audio_time, start_time, playing, midi_processor, video_recorder, network_manager, audio_analyzer):
+        """Update all 4 panels with organized data"""
+        self.update_system_panel(audio_time, start_time, playing, video_recorder)
+        self.update_audio_panel(audio_analyzer)
+        self.update_midi_panel(midi_processor)
+        self.update_particles_panel(network_manager, midi_processor)
+
+    def update_system_panel(self, audio_time, start_time, playing, video_recorder):
+        """Update top-left panel with core system status"""
         system_time = (time.time() - start_time) if (start_time and playing) else 0
-        info_text = [
-            f"Audio Time: {audio_time:.1f}s",
-            f"System Time: {system_time:.1f}s",
-            f"Events: {midi_processor.current_event_index}/{len(midi_processor.midi_events)}",
-            f"Playing: {'Yes' if playing else 'No'}",
-            f"Recording: {'🔴 REC' if video_recorder.recording else 'No'}",
-            f"Frames: {video_recorder.frames_recorded}" if video_recorder.recording else "Press V to record",
-            f"Target FPS: {video_recorder.target_fps}",
-            f"Active Elements: {len([c for c, a in midi_processor.channel_activity.items() if a > 0.1 and c < 4])}",
-            f"Particles in Odin: {len(network_manager.odin_node.particle_sink) if network_manager.odin_node else 0}/{network_manager.odin_node.max_sink_capacity if network_manager.odin_node else 0}",
-            f"EARTH: {audio_analyzer.element_frequency_levels['EARTH']:.4f}",
-            f"WATER: {audio_analyzer.element_frequency_levels['WATER']:.4f}",
-            f"FIRE: {audio_analyzer.element_frequency_levels['FIRE']:.4f}",
-            f"WIND: {audio_analyzer.element_frequency_levels['WIND']:.4f}",
-            f"EARTH Pan: {audio_analyzer.element_panning.get('EARTH', 0.0):.2f}",
-            f"WATER Pan: {audio_analyzer.element_panning.get('WATER', 0.0):.2f}",
-            f"FIRE Pan: {audio_analyzer.element_panning.get('FIRE', 0.0):.2f}",
-            f"WIND Pan: {audio_analyzer.element_panning.get('WIND', 0.0):.2f}",
+        
+        system_data = [
+            f"AUDIO: {audio_time:.1f}s",
+            f"SYSTEM: {system_time:.1f}s", 
+            f"STATUS: {'PLAYING' if playing else 'STOPPED'}",
+            f"RECORD: {'●REC' if video_recorder.recording else 'READY'}",
+            f"FRAMES: {video_recorder.frames_recorded}",
+            f"FPS: {video_recorder.target_fps}"
         ]
         
-        for i, (label, text) in enumerate(zip(self.info_labels, info_text)):
-            if label:
-                label.text = text
+        for i, label in enumerate(self.panel_labels['system']):
+            if i < len(system_data):
+                label.text = system_data[i]
+            else:
+                label.text = ""
+
+    def update_audio_panel(self, audio_analyzer):
+        """Update top-right panel with complete audio frequency and panning data"""
+        audio_data = [
+            f"EARTH FRQ:  {audio_analyzer.element_frequency_levels['EARTH']:.4f}",
+            f"WATER FRQ:  {audio_analyzer.element_frequency_levels['WATER']:.4f}",
+            f"FIRE  FRQ:  {audio_analyzer.element_frequency_levels['FIRE']:.4f}",
+            f"WIND  FRQ:  {audio_analyzer.element_frequency_levels['WIND']:.4f}",
+            f"EARTH PAN: {audio_analyzer.element_panning.get('EARTH', 0.0):+.4f}",
+            f"WATER PAN: {audio_analyzer.element_panning.get('WATER', 0.0):+.4f}",
+            f"FIRE  PAN: {audio_analyzer.element_panning.get('FIRE', 0.0):+.4f}",
+            f"WIND  PAN: {audio_analyzer.element_panning.get('WIND', 0.0):+.4f}"
+        ]
         
-        # Event log
+        for i, label in enumerate(self.panel_labels['audio']):
+            if i < len(audio_data):
+                label.text = audio_data[i]
+            else:
+                label.text = ""
+
+    def update_midi_panel(self, midi_processor):
+        """Update bottom-left panel with MIDI event data"""
+        active_elements = len([c for c, a in midi_processor.channel_activity.items() 
+                            if a > 0.1 and c < 4])
+        
+        midi_data = [
+            f"EVENTS: {midi_processor.current_event_index}/{len(midi_processor.midi_events)}",
+            f"ACTIVE: {active_elements} ELEMENTS",
+            f"CHANNELS: {len(midi_processor.active_channels)}",
+            f"EARTH: {midi_processor.channel_activity.get(0, 0.0):.4f}",
+            f"WIND:  {midi_processor.channel_activity.get(1, 0.0):.4f}",
+            f"FIRE:  {midi_processor.channel_activity.get(2, 0.0):.4f}",
+            f"WATER: {midi_processor.channel_activity.get(3, 0.0):.4f}",
+        ]
+        
+        for i, label in enumerate(self.panel_labels['midi']):
+            if i < len(midi_data):
+                label.text = midi_data[i]
+            else:
+                label.text = ""
+
+    def update_particles_panel(self, network_manager, midi_processor):
+        """Update bottom-right panel with particle system and events"""
+        odin_particles = len(network_manager.odin_node.particle_sink) if network_manager.odin_node else 0
+        max_capacity = network_manager.odin_node.max_sink_capacity if network_manager.odin_node else 0
+        
+        # Show recent events if logs enabled, otherwise show more particle data
         if self.show_logs:
-            recent_events_list = list(midi_processor.recent_events)[-8:]
-            for i, label in enumerate(self.event_labels):
-                if i < len(recent_events_list) and label:
-                    label.text = recent_events_list[-(i+1)]
-                    alpha = max(50, 255 - i * 25)
-                    label.color = (alpha, alpha, alpha, 255)
-                elif label:
-                    label.text = ""
+            recent_events = list(midi_processor.recent_events)[-4:]  # Only last 4 events
+            particles_data = [
+                f"ODIN: {odin_particles}/{max_capacity}",
+                f"RECENT EVENTS:",
+            ] + [event for event in recent_events]
         else:
-            for label in self.event_labels:
+            particles_data = [
+                f"ODIN: {odin_particles}/{max_capacity}",
+                f"CAPACITY: {(odin_particles/max_capacity*100):.1f}%" if max_capacity > 0 else "CAPACITY: 0%",
+                f"PARTICLES: {len(network_manager.particles)}",
+                f"EXPLOSIONS: {len(network_manager.explosion_particles)}",
+                "",
+                f"LOGS DISABLED"
+            ]
+        
+        for i, label in enumerate(self.panel_labels['particles']):
+            if i < len(particles_data):
+                label.text = particles_data[i]
+            else:
                 label.text = ""
 
     def toggle_logs(self):
@@ -86,3 +175,110 @@ class UIManager:
     def get_show_logs(self):
         """Get current log display state"""
         return self.show_logs
+    
+    def create_clean_panel(self, x, y, width, height, title):
+        """Create a 2001/Minority Report style panel"""
+        panel_info = {}
+        
+        # Subtle glow effect (behind everything, larger and transparent)
+        glow = shapes.Rectangle(
+            x - Settings.PANEL_GLOW_WIDTH, 
+            y - Settings.PANEL_GLOW_WIDTH,
+            width + (Settings.PANEL_GLOW_WIDTH * 2), 
+            height + (Settings.PANEL_GLOW_WIDTH * 2),
+            color=Settings.PANEL_GLOW[:3], 
+            batch=self.ui_batch
+        )
+        glow.opacity = Settings.PANEL_GLOW[3]
+        
+        # Main panel background
+        panel_bg = shapes.Rectangle(
+            x, y, width, height, 
+            color=Settings.PANEL_BACKGROUND[:3], 
+            batch=self.ui_batch
+        )
+        panel_bg.opacity = Settings.PANEL_BACKGROUND[3]
+        
+        # Border (4 thin lines forming a rectangle outline)
+        # Top border
+        border_top = shapes.Rectangle(
+            x, y + height - Settings.PANEL_BORDER_WIDTH, 
+            width, Settings.PANEL_BORDER_WIDTH,
+            color=Settings.PANEL_BORDER[:3], batch=self.ui_batch
+        )
+        border_top.opacity = Settings.PANEL_BORDER[3]
+
+        # Bottom border
+        border_bottom = shapes.Rectangle(
+            x, y, 
+            width, Settings.PANEL_BORDER_WIDTH,
+            color=Settings.PANEL_BORDER[:3], batch=self.ui_batch
+        )
+        border_bottom.opacity = Settings.PANEL_BORDER[3]
+
+        # Left border
+        border_left = shapes.Rectangle(
+            x, y, 
+            Settings.PANEL_BORDER_WIDTH, height,
+            color=Settings.PANEL_BORDER[:3], batch=self.ui_batch
+        )
+        border_left.opacity = Settings.PANEL_BORDER[3]
+
+        # Right border
+        border_right = shapes.Rectangle(
+            x + width - Settings.PANEL_BORDER_WIDTH, y, 
+            Settings.PANEL_BORDER_WIDTH, height,
+            color=Settings.PANEL_BORDER[:3], batch=self.ui_batch
+        )
+        border_right.opacity = Settings.PANEL_BORDER[3]
+        
+        # Title label
+        title_label = text.Label(
+            title, font_name=self.clean_font, font_size=Settings.UI_TITLE_SIZE,
+            color=Settings.PANEL_TITLE_COLOR,
+            x=x + Settings.PANEL_PADDING, 
+            y=y + height - Settings.PANEL_PADDING - 5,
+            batch=self.ui_batch
+        )
+        
+        panel_info['background'] = panel_bg
+        panel_info['borders'] = [border_top, border_bottom, border_left, border_right]
+        panel_info['glow'] = glow
+        panel_info['title'] = title_label
+        
+        return panel_info
+
+    def setup_clean_font(self):
+        """Try to use clean monospace font with fallback"""
+        # Pyglet will automatically fall back to system default if font doesn't exist
+        # So we can just set our preferred font directly
+        self.clean_font = Settings.UI_FONT_FAMILY
+        print(f"✅ Using font: {Settings.UI_FONT_FAMILY} (with system fallback)")
+
+    def create_panel_labels(self, panel_x, panel_y, panel_title, label_count, panel_height=None):
+        """Create labels positioned within a clean panel"""
+        labels = []
+        
+        # Use provided height or default
+        if panel_height is None:
+            panel_height = Settings.PANEL_HEIGHT
+        
+        for i in range(label_count):
+            # Calculate Y position using the actual panel height
+            label_y = (panel_y + panel_height - Settings.PANEL_PADDING - 
+                    Settings.TITLE_BOTTOM_MARGIN - Settings.PANEL_TITLE_HEIGHT - 
+                    (i * Settings.LINE_HEIGHT))
+            
+            label = text.Label(
+                '', 
+                font_name=self.clean_font, 
+                font_size=Settings.UI_DATA_SIZE,
+                color=Settings.PANEL_TEXT_COLOR,
+                x=panel_x + Settings.PANEL_PADDING,
+                y=label_y,
+                batch=self.ui_batch
+            )
+            labels.append(label)
+        
+        return labels
+    
