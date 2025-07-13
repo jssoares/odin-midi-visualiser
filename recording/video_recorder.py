@@ -25,7 +25,7 @@ class VideoRecorder:
         
         print(f"Setting up recording: {filename}")
         
-        for codec in ['MJPG', 'mp4v', 'XVID']:
+        for codec in ['H264', 'mp4v', 'MJPG', 'XVID']:
             try:
                 fourcc = cv2.VideoWriter_fourcc(*codec)
                 test_writer = cv2.VideoWriter(filename, fourcc, self.target_fps, (window_width, window_height))
@@ -147,6 +147,7 @@ class VideoRecorder:
                 'ffmpeg', '-y',
                 '-i', self.output_filename,
                 '-i', self.original_audio_file,
+                '-vf', 'scale=1920:1080', # Force scale to 1080p
                 '-c:v', 'libx264',
                 '-c:a', 'aac',
                 '-preset', 'medium',

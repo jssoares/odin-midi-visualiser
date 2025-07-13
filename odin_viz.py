@@ -2,13 +2,14 @@ import pyglet
 import time
 import os
 
-from config.settings import Settings
-from audio import AudioAnalyzer, AudioPlayer
-from midi.midi_processor import MIDIProcessor
+from config.settings          import Settings
+from audio                    import AudioAnalyzer, AudioPlayer
+from midi.midi_processor      import MIDIProcessor
 from recording.video_recorder import VideoRecorder
-from network.network_manager import NetworkManager
-from ui.ui_manager import UIManager
-from utils.file_manager import FileManager
+from network.network_manager  import NetworkManager
+from ui.ui_manager            import UIManager
+from visual.visual_manager    import VisualManager
+from utils.file_manager       import FileManager
 
 
 class MIDIVisualizer(pyglet.window.Window):
@@ -43,7 +44,9 @@ class MIDIVisualizer(pyglet.window.Window):
 
         # Instantiate the network manager class
         self.network_manager = NetworkManager(self.width, self.height, self.batch, self)
-        
+
+        # Instantiate the visual manager class
+        self.visual_manager = VisualManager(self.width, self.height, self.grid_batch)        
 
         self.start_time = None
         self.playing = False
@@ -82,7 +85,10 @@ class MIDIVisualizer(pyglet.window.Window):
             self.network_manager.update_nodes_and_connections(dt, audio_level)
             self.network_manager.update_particles(dt)
             self.network_manager.update_odin_from_elements(self.midi_processor, self.audio_analyzer)
-            
+
+            # Update visual effects
+            self.visual_manager.update_effects(dt, total_activity)
+
             # Update UI
             self.ui_manager.update_ui(
                 audio_time,
@@ -107,8 +113,14 @@ class MIDIVisualizer(pyglet.window.Window):
         self.clear()
         
         # Background with activity-based intensity
-        bg_intensity = max(0, min(0.3, self.background_intensity * 0.15))
-        pyglet.gl.glClearColor(bg_intensity, bg_intensity, bg_intensity + 0.02, 1.0)
+
+        # Dark background
+        # bg_intensity = max(0, min(0.3, self.background_intensity * 0.15))
+        # pyglet.gl.glClearColor(bg_intensity, bg_intensity, bg_intensity + 0.02, 1.0)
+        
+        # Whiter background
+        bg_intensity = 0.98 + max(0, min(0.08, self.background_intensity * 0.15))  # Was 0.85, now 0.92-1.0 range
+        pyglet.gl.glClearColor(bg_intensity, bg_intensity, bg_intensity, 1.0)
         
         # Draw everything
         self.grid_batch.draw()

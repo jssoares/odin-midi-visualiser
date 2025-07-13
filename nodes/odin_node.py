@@ -1,8 +1,8 @@
 import time
 import math
 from pyglet import shapes, text
-from shapes import CurvedOdinShape
-from particles import ElementalParticle, ExplosionParticle
+from visual.shapes import CurvedOdinShape
+from visual.particles import ExplosionParticle
 
 class OdinNode:
     """Special node class for Odin with audio-reactive morphing"""

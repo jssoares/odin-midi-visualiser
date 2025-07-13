@@ -1,8 +1,7 @@
 import time
 import math
 from pyglet import text
-from shapes import ElementalShape
-from particles import ElementalParticle, ExplosionParticle
+from visual.shapes import ElementalShape
 
 class ElementalNode:
     """Enhanced node class for elements with audio-reactive shapes"""
@@ -55,36 +54,36 @@ class ElementalNode:
         note_in_octave = note % 12  # 0-11 for C, C#, D, D#, E, F, F#, G, G#, A, A#, B
         
         if self.element_type == "EARTH":
-            # Earth gradient: Brown → Orange → Yellow → Light Brown
+            # Earth gradient: Brown → Darker Browns (no light colors)
             gradient_colors = [
                 [139, 69, 19],    # Dark brown (C)
-                [160, 82, 24],    # 
-                [180, 95, 30],    # 
-                [200, 108, 36],   # 
-                [220, 120, 42],   # Orange-brown (E)
-                [240, 135, 50],   # 
-                [255, 150, 60],   # 
-                [255, 165, 75],   # 
-                [255, 180, 90],   # Yellow-orange (G#)
-                [240, 190, 100],  # 
-                [220, 180, 95],   # 
-                [200, 160, 80]    # Light brown (B)
+                [145, 75, 25],    # 
+                [150, 80, 30],    # 
+                [155, 85, 35],    # 
+                [160, 90, 40],    # Medium brown (E)
+                [155, 85, 45],    # 
+                [150, 80, 50],    # 
+                [145, 75, 55],    # 
+                [140, 70, 60],    # Darker brown (G#)
+                [135, 65, 55],    # 
+                [130, 60, 50],    # 
+                [125, 55, 45]     # Darkest brown (B)
             ]
         elif self.element_type == "WIND":
-            # Wind gradient: Sky Blue → Cyan → Light Blue → White
+            # Wind gradient: Sky Blue → Darker Cyan (no white)
             gradient_colors = [
                 [135, 206, 235],  # Sky blue (C)
-                [120, 210, 240],  # 
-                [105, 215, 245],  # 
-                [90, 220, 250],   # 
-                [75, 225, 255],   # Cyan (E)
-                [100, 230, 255],  # 
-                [125, 235, 255],  # 
-                [150, 240, 255],  # 
-                [175, 245, 255],  # Light cyan (G#)
-                [200, 250, 255],  # 
-                [225, 252, 255],  # 
-                [250, 255, 255]   # Near white (B)
+                [120, 200, 230],  # 
+                [105, 195, 225],  # 
+                [90, 190, 220],   # 
+                [75, 185, 215],   # Darker cyan (E)
+                [85, 180, 210],   # 
+                [95, 175, 205],   # 
+                [105, 170, 200],  # 
+                [115, 165, 195],  # Medium cyan (G#)
+                [125, 160, 190],  # 
+                [135, 155, 185],  # 
+                [145, 150, 180]   # Darkest blue-grey (B)
             ]
         elif self.element_type == "FIRE":
             # Fire gradient: Deep Red → Red → Orange → Yellow
@@ -103,20 +102,20 @@ class ElementalNode:
                 [255, 200, 60]    # Yellow-orange (B)
             ]
         elif self.element_type == "WATER":
-            # Water gradient: Deep Blue → Blue → Aqua → Light Blue
+            # Water gradient: Deep Blue → Medium Blue (no light colors)
             gradient_colors = [
                 [0, 191, 255],    # Deep blue (C)
-                [20, 200, 255],   # 
-                [40, 210, 255],   # 
-                [60, 220, 255],   # 
-                [80, 230, 255],   # Blue-aqua (E)
-                [100, 240, 255],  # 
-                [120, 245, 255],  # 
-                [140, 250, 255],  # 
-                [160, 252, 255],  # Light aqua (G#)
-                [180, 254, 255],  # 
-                [200, 256, 255],  # 
-                [220, 255, 255]   # Very light blue (B)
+                [10, 185, 250],   # 
+                [20, 180, 245],   # 
+                [30, 175, 240],   # 
+                [40, 170, 235],   # Medium blue (E)
+                [35, 165, 230],   # 
+                [30, 160, 225],   # 
+                [25, 155, 220],   # 
+                [20, 150, 215],   # Darker blue (G#)
+                [15, 145, 210],   # 
+                [10, 140, 205],   # 
+                [5, 135, 200]     # Darkest blue (B)
             ]
         else:
             # Fallback
