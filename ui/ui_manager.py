@@ -6,16 +6,21 @@ from pyglet          import shapes, text
 class UIManager:
     def __init__(self, window_width, window_height, ui_batch, grid_batch):
         # UI
-        self.info_labels = []
-        self.event_labels = []
-        self.show_logs = True
-        self.ui_batch = ui_batch
-        self.grid_batch = grid_batch
-        self.window_width = window_width
+        self.info_labels   = []
+        self.event_labels  = []
+        self.show_logs     = True
+        self.ui_batch      = ui_batch
+        self.grid_batch    = grid_batch
+        self.window_width  = window_width
         self.window_height = window_height
-        self.panels = {}           # Store panel background shapes
-        self.panel_labels = {}     # Store labels organized by panel
-        self.clean_font = None     # Store working font name
+        self.panels        = {}             # Store panel background shapes
+        self.panel_labels  = {}             # Store labels organized by panel
+        self.clean_font    = None           # Store working font name
+
+        # Animation state for holographic effects
+        self.pulse_timer       = 0.0
+        self.last_data_update  = {}  # Track when each panel's data changed
+        self.panel_fade_states = {}  # Track fade animations per panel
 
     def create_grid(self):
         grid_color   = Settings.GRID_COLOR
@@ -79,6 +84,10 @@ class UIManager:
         self.update_audio_panel(audio_analyzer)
         self.update_midi_panel(midi_processor)
         self.update_particles_panel(network_manager, midi_processor)
+        
+        # Apply subtle holographic animations
+        self.update_panel_animations(1/60.0)  # Assume 60fps
+        self.update_fade_effects()
 
     def update_system_panel(self, audio_time, start_time, playing, video_recorder):
         """Update top-left panel with core system status"""
@@ -282,3 +291,61 @@ class UIManager:
         
         return labels
     
+    def update_panel_animations(self, dt):
+        """Apply subtle 2001/Minority Report style animations"""
+        if not Settings.PANEL_PULSE_ENABLED:
+            return
+        
+        import math
+        self.pulse_timer += dt
+        
+        # Calculate breathing pulse (sine wave)
+        pulse_factor = math.sin(self.pulse_timer * Settings.PANEL_PULSE_SPEED * 2 * math.pi)
+        pulse_opacity_modifier = 1.0 + (pulse_factor * Settings.PANEL_PULSE_INTENSITY)
+        
+        # Apply to all panel backgrounds
+        for panel_name, panel_info in self.panels.items():
+            if 'background' in panel_info:
+                base_opacity = Settings.PANEL_BACKGROUND[3]
+                new_opacity = int(base_opacity * pulse_opacity_modifier)
+                panel_info['background'].opacity = max(20, min(255, new_opacity))
+
+    def detect_data_changes(self, panel_name, new_data):
+        """Detect when panel data changes for fade effects"""
+        if panel_name not in self.last_data_update:
+            self.last_data_update[panel_name] = new_data
+            return False
+        
+        if self.last_data_update[panel_name] != new_data:
+            self.last_data_update[panel_name] = new_data
+            self.trigger_panel_highlight(panel_name)
+            return True
+        return False
+
+    def trigger_panel_highlight(self, panel_name):
+        """Subtle highlight when data changes (Minority Report style)"""
+        if panel_name in self.panels and 'borders' in self.panels[panel_name]:
+            # Briefly brighten the border
+            for border in self.panels[panel_name]['borders']:
+                # Store original opacity and boost it temporarily
+                if not hasattr(border, 'original_opacity'):
+                    border.original_opacity = border.opacity
+                border.opacity = min(255, border.opacity + 60)
+            
+            # Schedule fade back to normal
+            self.panel_fade_states[panel_name] = time.time()
+
+    def update_fade_effects(self):
+        """Handle fade-back animations for highlighted panels"""
+        current_time = time.time()
+        
+        for panel_name, trigger_time in list(self.panel_fade_states.items()):
+            if current_time - trigger_time > 0.5:  # Fade duration
+                # Restore original border opacity
+                if panel_name in self.panels and 'borders' in self.panels[panel_name]:
+                    for border in self.panels[panel_name]['borders']:
+                        if hasattr(border, 'original_opacity'):
+                            border.opacity = border.original_opacity
+                
+                # Remove from fade tracking
+                del self.panel_fade_states[panel_name]

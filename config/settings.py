@@ -85,6 +85,17 @@ class Settings:
     LINE_HEIGHT         = 14  # Spacing between lines
     TITLE_BOTTOM_MARGIN = 8   # Space below panel titles
 
+    # Holographic Animation Settings (subtle, not distracting)
+    PANEL_PULSE_ENABLED   = True
+    PANEL_PULSE_SPEED     = 0.8   # Cycles per second (slow breathing)
+    PANEL_PULSE_INTENSITY = 0.15  # How much opacity varies (subtle)
+    PANEL_FADE_SPEED      = 4.0   # How fast panels fade in/out on data changes
+
+    # Geometric Precision (2001 aesthetic)
+    PANEL_PERFECT_SPACING = True    # Ensures pixel-perfect alignment
+    PANEL_DATA_ALIGNMENT  = 'left'  # Clean left alignment for data
+    PANEL_TITLE_ALIGNMENT = 'left'  # Titles align with data
+
     # File paths
     PROJECT_ROOT      = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     ASSETS_DIR        = os.path.join(PROJECT_ROOT, "assets")
