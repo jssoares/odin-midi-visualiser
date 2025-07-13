@@ -24,7 +24,7 @@ class BackgroundPattern:
         
         # Create vertical lines
         for x in range(0, self.window_width, spacing):
-            line = shapes.Line(x, 0, x, self.window_height, color=(40, 50, 60), batch=self.batch)
+            line = shapes.Line(x, 0, x, self.window_height, color=Settings.BACKGROUND_PATTERN_COLOR, batch=self.batch)
             line.opacity = Settings.BACKGROUND_PATTERN_OPACITY
             line.base_x1 = x
             line.base_x2 = x
@@ -33,7 +33,7 @@ class BackgroundPattern:
         
         # Create horizontal lines  
         for y in range(0, self.window_height, spacing):
-            line = shapes.Line(0, y, self.window_width, y, color=(40, 50, 60), batch=self.batch)
+            line = shapes.Line(0, y, self.window_width, y, color=Settings.BACKGROUND_PATTERN_COLOR, batch=self.batch)
             line.opacity = Settings.BACKGROUND_PATTERN_OPACITY
             line.base_y1 = y
             line.base_y2 = y

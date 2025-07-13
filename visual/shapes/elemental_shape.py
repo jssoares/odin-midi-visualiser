@@ -217,15 +217,26 @@ class ElementalShape:
         else:
             self.base_rect.opacity = 160  # Visible when no MIDI
         self.base_rect.color = tuple(color)
-        
+    
         for i, ripple in enumerate(self.ripples):
-            # Ripples fade from center outward
-            ripple_opacity = int(max(0, self.audio_intensity * 150 - i * 30))  # Quicker fade-in
-            ripple.color = tuple(color)
-            ripple.opacity = ripple_opacity
-            # Ripples expand with audio
-            base_radius = self.size + (i + 1) * 10
-            ripple.radius = int(base_radius + self.audio_intensity * 15)
+            if self.audio_intensity > 0.02:
+                # Ripples fade from center outward
+                ripple_opacity = int(max(0, self.audio_intensity * 150 - i * 30))
+                ripple.color = tuple(color)
+                ripple.opacity = ripple_opacity
+                # Make first ripple smaller than the square
+                if i == 0:
+                    base_radius = self.size * 0.8  # 80% of square size
+                else:
+                    base_radius = self.size + i * 10  # Subsequent ripples grow outward
+                
+                # Ensure radius is always positive
+                calculated_radius = int(base_radius + self.audio_intensity * 15)
+                ripple.radius = max(1, calculated_radius)
+            else:
+                # Ensure they're completely hidden when no audio
+                ripple.opacity = 0
+                ripple.radius = 1  # Set to 1 instead of 0 to avoid GL error
     
     def set_position_and_size(self, x, y, size):
         """Update position and size"""

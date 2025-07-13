@@ -113,8 +113,14 @@ class MIDIVisualizer(pyglet.window.Window):
         self.clear()
         
         # Background with activity-based intensity
-        bg_intensity = max(0, min(0.3, self.background_intensity * 0.15))
-        pyglet.gl.glClearColor(bg_intensity, bg_intensity, bg_intensity + 0.02, 1.0)
+
+        # Dark background
+        # bg_intensity = max(0, min(0.3, self.background_intensity * 0.15))
+        # pyglet.gl.glClearColor(bg_intensity, bg_intensity, bg_intensity + 0.02, 1.0)
+        
+        # Whiter background
+        bg_intensity = 0.98 + max(0, min(0.08, self.background_intensity * 0.15))  # Was 0.85, now 0.92-1.0 range
+        pyglet.gl.glClearColor(bg_intensity, bg_intensity, bg_intensity, 1.0)
         
         # Draw everything
         self.grid_batch.draw()

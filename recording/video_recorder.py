@@ -147,6 +147,7 @@ class VideoRecorder:
                 'ffmpeg', '-y',
                 '-i', self.output_filename,
                 '-i', self.original_audio_file,
+                '-vf', 'scale=1920:1080', # Force scale to 1080p
                 '-c:v', 'libx264',
                 '-c:a', 'aac',
                 '-preset', 'medium',
