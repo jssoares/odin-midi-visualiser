@@ -29,45 +29,112 @@ class ElementalShape:
             self.create_water_shape()
     
     def create_earth_shape(self):
-        """Earth: Solid square that grows crystals/spikes with audio"""
-        # Base solid square
-        self.base_rect = shapes.Rectangle(
-            self.x - self.size, self.y - self.size, 
-            self.size * 2, self.size * 2, 
+        import math
+        
+        R = self.size  # Circle radius
+        
+        """Arc of influence"""
+        self.circumference = shapes.Arc(
+            self.x, self.y,  # Circle center
+            R,               # Radius
+            angle=360,       # Full circle outline
+            thickness=1,     # Line width
+            color=(100, 100, 100),
+            batch=self.batch
+        )
+        self.circumference.opacity = 60
+        
+        """Earth: Downward pointing triangle"""
+        # Triangle vertices (120° apart, starting at 270°)
+        vertex1_x = self.x
+        vertex1_y = self.y - R                                    # Bottom point (270°)
+        
+        vertex2_x = self.x - R * math.cos(math.radians(30))      # Top-left (150°)
+        vertex2_y = self.y + R * math.sin(math.radians(30))
+        
+        vertex3_x = self.x + R * math.cos(math.radians(30))      # Top-right (30°)
+        vertex3_y = self.y + R * math.sin(math.radians(30))
+        
+        self.base_rect = shapes.Triangle(
+            vertex1_x, vertex1_y,  # Bottom
+            vertex2_x, vertex2_y,  # Top-left
+            vertex3_x, vertex3_y,  # Top-right
             color=tuple(self.base_color), batch=self.batch
         )
         self.base_rect.opacity = 160
+
+        """Horizontal dividing line"""
+        self.line = shapes.Line(
+            self.x - R * math.cos(math.radians(30)), self.y,  # Start at left edge of triangle
+            self.x + R * math.cos(math.radians(30)), self.y,  # End at right edge of triangle
+            thickness=3,
+            color=tuple(self.base_color),
+            batch=self.batch
+        )
+        self.line.opacity = 160
         
         # Crystal spikes that emerge with audio (small rectangles at corners/edges)
         self.crystals = []
-        spike_positions = [
-            (self.size * 1.2, 0),           # Right
-            (-self.size * 1.2, 0),          # Left  
-            (0, self.size * 1.2),           # Top
-            (0, -self.size * 1.2),          # Bottom
-            (self.size * 0.8, self.size * 0.8),   # Top-right
-            (-self.size * 0.8, self.size * 0.8),  # Top-left
-            (self.size * 0.8, -self.size * 0.8),  # Bottom-right
-            (-self.size * 0.8, -self.size * 0.8)  # Bottom-left
-        ]
-        
-        for dx, dy in spike_positions:
+        for i in range(8):
+            angle = math.radians(i * 45)  # 45° intervals for octagon vertices
+            
+            # Octagon vertex position ON the circumference
+            vertex_x = self.x + R * math.cos(angle)
+            vertex_y = self.y + R * math.sin(angle)
+            
+            # Small square crystal AT the vertex point
             crystal = shapes.Rectangle(
-                int(self.x + dx - 3), int(self.y + dy - 8), 6, 16,
+                int(vertex_x - 2), int(vertex_y - 2),  # Center 4x4 square on vertex
+                4, 4,  # Small square
                 color=tuple(self.base_color), batch=self.batch
             )
             crystal.opacity = 0
             self.crystals.append(crystal)
     
     def create_wind_shape(self):
-        """Wind: Flowing lines/curves that ripple with audio"""
-        # Base square (like other elements)
-        self.base_rect = shapes.Rectangle(
-            self.x - self.size, self.y - self.size, 
-            self.size * 2, self.size * 2, 
+        import math
+        
+        R = self.size  # Circle radius
+        
+        """Arc of influence"""
+        self.circumference = shapes.Arc(
+            self.x, self.y,  # Circle center
+            R,               # Radius
+            angle=360,       # Full circle outline
+            thickness=1,     # Line width
+            color=(100, 100, 100),
+            batch=self.batch
+        )
+        self.circumference.opacity = 60
+        
+        """Wind: Upward pointing triangle"""
+        # Triangle vertices (120° apart, starting at 90°)
+        vertex1_x = self.x
+        vertex1_y = self.y + R                                    # Top point (90°)
+        
+        vertex2_x = self.x - R * math.cos(math.radians(30))      # Bottom-left (210°)
+        vertex2_y = self.y - R * math.sin(math.radians(30))
+        
+        vertex3_x = self.x + R * math.cos(math.radians(30))      # Bottom-right (330°)
+        vertex3_y = self.y - R * math.sin(math.radians(30))
+        
+        self.base_rect = shapes.Triangle(
+            vertex1_x, vertex1_y,  # Top
+            vertex2_x, vertex2_y,  # Bottom-left
+            vertex3_x, vertex3_y,  # Bottom-right
             color=tuple(self.base_color), batch=self.batch
         )
-        self.base_rect.opacity = 100
+        self.base_rect.opacity = 160
+
+        """Horizontal dividing line"""
+        self.line = shapes.Line(
+            self.x - R * math.cos(math.radians(30)), self.y,  # Start at left edge of triangle
+            self.x + R * math.cos(math.radians(30)), self.y,  # End at right edge of triangle
+            thickness=3,
+            color=tuple(self.base_color),
+            batch=self.batch
+        )
+        self.line.opacity = 160
         
         # Wind streams (horizontal lines that shift with audio)
         self.wind_streams = []
@@ -81,14 +148,39 @@ class ElementalShape:
             self.wind_streams.append(stream)
     
     def create_fire_shape(self):
-        """Fire: Triangular flames that dance with audio"""
-        # Base square (like other elements)
-        self.base_rect = shapes.Rectangle(
-            self.x - self.size, self.y - self.size, 
-            self.size * 2, self.size * 2, 
+        import math
+        
+        R = self.size  # Circle radius
+        
+        """Arc of influence"""
+        self.circumference = shapes.Arc(
+            self.x, self.y,  # Circle center
+            R,               # Radius
+            angle=360,       # Full circle outline
+            thickness=1,     # Line width
+            color=(100, 100, 100),
+            batch=self.batch
+        )
+        self.circumference.opacity = 60
+        
+        """Fire: Upward pointing triangle"""
+        # Triangle vertices (120° apart, starting at 90°)
+        vertex1_x = self.x
+        vertex1_y = self.y + R                                    # Top point (90°)
+        
+        vertex2_x = self.x - R * math.cos(math.radians(30))      # Bottom-left (210°)
+        vertex2_y = self.y - R * math.sin(math.radians(30))
+        
+        vertex3_x = self.x + R * math.cos(math.radians(30))      # Bottom-right (330°)
+        vertex3_y = self.y - R * math.sin(math.radians(30))
+        
+        self.base_rect = shapes.Triangle(
+            vertex1_x, vertex1_y,  # Top
+            vertex2_x, vertex2_y,  # Bottom-left
+            vertex3_x, vertex3_y,  # Bottom-right
             color=tuple(self.base_color), batch=self.batch
         )
-        self.base_rect.opacity = 140
+        self.base_rect.opacity = 160
         
         # Flame tips (small circles that flicker with audio)
         self.flame_tips = []
@@ -109,14 +201,39 @@ class ElementalShape:
             self.flame_tips.append(tip)
     
     def create_water_shape(self):
-        """Water: Flowing drops/waves that pulse with audio"""
-        # Base square (like other elements)
-        self.base_rect = shapes.Rectangle(
-            self.x - self.size, self.y - self.size, 
-            self.size * 2, self.size * 2, 
+        import math
+        
+        R = self.size  # Circle radius
+        
+        """Arc of influence"""
+        self.circumference = shapes.Arc(
+            self.x, self.y,  # Circle center
+            R,               # Radius
+            angle=360,       # Full circle outline
+            thickness=1,     # Line width
+            color=(100, 100, 100),
+            batch=self.batch
+        )
+        self.circumference.opacity = 60
+        
+        """Water: Downward pointing triangle"""
+        # Triangle vertices (120° apart, starting at 270°)
+        vertex1_x = self.x
+        vertex1_y = self.y - R                                    # Bottom point (270°)
+        
+        vertex2_x = self.x - R * math.cos(math.radians(30))      # Top-left (150°)
+        vertex2_y = self.y + R * math.sin(math.radians(30))
+        
+        vertex3_x = self.x + R * math.cos(math.radians(30))      # Top-right (30°)
+        vertex3_y = self.y + R * math.sin(math.radians(30))
+        
+        self.base_rect = shapes.Triangle(
+            vertex1_x, vertex1_y,  # Bottom
+            vertex2_x, vertex2_y,  # Top-left
+            vertex3_x, vertex3_y,  # Top-right
             color=tuple(self.base_color), batch=self.batch
         )
-        self.base_rect.opacity = 120
+        self.base_rect.opacity = 160
         
         # Water ripples (concentric circles that expand with audio)
         self.ripples = []
@@ -159,7 +276,18 @@ class ElementalShape:
         else:
             self.base_rect.opacity = 160  # Visible when no MIDI
         self.base_rect.color = tuple(color)
-        
+
+        self.circumference.color = (120, 120, 120)  # Slightly lighter gray
+        circumference_opacity = 60 + int(self.audio_intensity * 30)  # Subtle pulse with audio
+        self.circumference.opacity = circumference_opacity
+
+        if hasattr(self, 'line'):
+            self.line.color = tuple(color)
+            if self.midi_activity > 0.02:
+                self.line.opacity = 0  # Hidden during MIDI activity
+            else:
+                self.line.opacity = 160  # Visible when no MIDI
+
         # Use audio_intensity for crystal effects
         crystal_opacity = int(min(255, max(0, self.audio_intensity * 220)))
         for i, crystal in enumerate(self.crystals):
@@ -178,7 +306,18 @@ class ElementalShape:
         else:
             self.base_rect.opacity = 160  # Visible when no MIDI
         self.base_rect.color = tuple(color)
-        
+
+        self.circumference.color = (120, 120, 120)  # Slightly lighter gray
+        circumference_opacity = 60 + int(self.audio_intensity * 30)  # Subtle pulse with audio
+        self.circumference.opacity = circumference_opacity
+
+        if hasattr(self, 'line'):
+            self.line.color = tuple(color)
+            if self.midi_activity > 0.02:
+                self.line.opacity = 0  # Hidden during MIDI activity
+            else:
+                self.line.opacity = 160  # Visible when no MIDI
+
         stream_opacity = int(min(255, max(0, self.audio_intensity * 200)))  # Quicker fade-in
         for i, stream in enumerate(self.wind_streams):
             stream.color = tuple(color)
@@ -194,7 +333,11 @@ class ElementalShape:
         else:
             self.base_rect.opacity = 160  # Visible when no MIDI
         self.base_rect.color = tuple(color)
-        
+
+        self.circumference.color = (120, 120, 120)  # Slightly lighter gray
+        circumference_opacity = 60 + int(self.audio_intensity * 30)  # Subtle pulse with audio
+        self.circumference.opacity = circumference_opacity
+
         # Only show fire tips when there's audio activity
         for i, tip in enumerate(self.flame_tips):
             if self.audio_intensity > 0.02:  # Lower threshold for quicker response
@@ -217,7 +360,11 @@ class ElementalShape:
         else:
             self.base_rect.opacity = 160  # Visible when no MIDI
         self.base_rect.color = tuple(color)
-    
+
+        self.circumference.color = (120, 120, 120)  # Slightly lighter gray
+        circumference_opacity = 60 + int(self.audio_intensity * 30)  # Subtle pulse with audio
+        self.circumference.opacity = circumference_opacity
+
         for i, ripple in enumerate(self.ripples):
             if self.audio_intensity > 0.02:
                 # Ripples fade from center outward
