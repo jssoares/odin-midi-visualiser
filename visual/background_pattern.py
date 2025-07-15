@@ -19,26 +19,34 @@ class BackgroundPattern:
             self.create_pattern()
     
     def create_pattern(self):
-        """Create a lattice/grid of lines that can undulate"""
+        """Create a lattice/grid of lines centered on the window"""
         spacing = Settings.BACKGROUND_PATTERN_SPACING
         
-        # Create vertical lines
-        for x in range(0, self.window_width, spacing):
-            line = shapes.Line(x, 0, x, self.window_height, color=Settings.BACKGROUND_PATTERN_COLOR, batch=self.batch)
-            line.opacity = Settings.BACKGROUND_PATTERN_OPACITY
-            line.base_x1 = x
-            line.base_x2 = x
-            line.direction = 'vertical'
-            self.pattern_elements.append(line)
+        # Calculate center point
+        center_x = self.window_width // 2
+        center_y = self.window_height // 2
         
-        # Create horizontal lines  
-        for y in range(0, self.window_height, spacing):
-            line = shapes.Line(0, y, self.window_width, y, color=Settings.BACKGROUND_PATTERN_COLOR, batch=self.batch)
-            line.opacity = Settings.BACKGROUND_PATTERN_OPACITY
-            line.base_y1 = y
-            line.base_y2 = y
-            line.direction = 'horizontal'
-            self.pattern_elements.append(line)
+        # Create vertical lines extending from center outward
+        for i in range(-center_x // spacing, (center_x // spacing) + 1):
+            x = center_x + (i * spacing)
+            if 0 <= x <= self.window_width:
+                line = shapes.Line(x, 0, x, self.window_height, color=Settings.BACKGROUND_PATTERN_COLOR, batch=self.batch)
+                line.opacity = Settings.BACKGROUND_PATTERN_OPACITY
+                line.base_x1 = x
+                line.base_x2 = x
+                line.direction = 'vertical'
+                self.pattern_elements.append(line)
+        
+        # Create horizontal lines extending from center outward
+        for i in range(-center_y // spacing, (center_y // spacing) + 1):
+            y = center_y + (i * spacing)
+            if 0 <= y <= self.window_height:
+                line = shapes.Line(0, y, self.window_width, y, color=Settings.BACKGROUND_PATTERN_COLOR, batch=self.batch)
+                line.opacity = Settings.BACKGROUND_PATTERN_OPACITY
+                line.base_y1 = y
+                line.base_y2 = y
+                line.direction = 'horizontal'
+                self.pattern_elements.append(line)
         
     def update(self, dt, total_audio_activity=0.0):
         """Update lattice with undulating waves"""

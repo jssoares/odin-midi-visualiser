@@ -13,7 +13,7 @@ class ElementalNode:
         self.id = node_id
         self.instrument_channel = instrument_channel
         self.element_type = element_type
-        self.base_size = 28
+        self.base_size = 55
         self.size = self.base_size
         self.target_size = self.base_size
         self.color = [int(c) for c in element_color] if element_color else [100, 150, 200]
