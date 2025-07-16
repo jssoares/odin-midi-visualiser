@@ -272,7 +272,7 @@ class ElementalShape:
         """Earth crystals grow with audio"""
         # Use MIDI activity for square fade (not audio_intensity)
         if self.midi_activity > 0.02:
-            self.base_rect.opacity = 0  # Hidden during MIDI activity
+            self.base_rect.opacity = 20  # Always there # during MIDI activity
         else:
             self.base_rect.opacity = 160  # Visible when no MIDI
         self.base_rect.color = tuple(color)
@@ -283,10 +283,10 @@ class ElementalShape:
 
         if hasattr(self, 'line'):
             self.line.color = tuple(color)
-            if self.midi_activity > 0.02:
-                self.line.opacity = 0  # Hidden during MIDI activity
+            if self.midi_activity > 0.17:
+                self.line.opacity = 20  # Hidden during MIDI activity
             else:
-                self.line.opacity = 160  # Visible when no MIDI
+                self.line.opacity = 140  # Visible when no MIDI
 
         # Use audio_intensity for crystal effects
         crystal_opacity = int(min(255, max(0, self.audio_intensity * 220)))
@@ -304,7 +304,7 @@ class ElementalShape:
         if self.midi_activity > 0.02:
             self.base_rect.opacity = 0  # Hidden during MIDI activity
         else:
-            self.base_rect.opacity = 160  # Visible when no MIDI
+            self.base_rect.opacity = 130  # Visible when no MIDI
         self.base_rect.color = tuple(color)
 
         self.circumference.color = (120, 120, 120)  # Slightly lighter gray
@@ -313,7 +313,7 @@ class ElementalShape:
 
         if hasattr(self, 'line'):
             self.line.color = tuple(color)
-            if self.midi_activity > 0.02:
+            if self.midi_activity > 0.07:
                 self.line.opacity = 0  # Hidden during MIDI activity
             else:
                 self.line.opacity = 160  # Visible when no MIDI
@@ -328,10 +328,10 @@ class ElementalShape:
     def update_fire(self, color):
         """Fire tips flicker with audio"""
         # Square completely disappears when flames are active, reappears when inactive
-        if self.midi_activity > 0.02:
-            self.base_rect.opacity = 0  # Hidden during MIDI activity
+        if self.midi_activity > 0.05:
+            self.base_rect.opacity = 30  # Hidden during MIDI activity
         else:
-            self.base_rect.opacity = 160  # Visible when no MIDI
+            self.base_rect.opacity = 120  # Visible when no MIDI
         self.base_rect.color = tuple(color)
 
         self.circumference.color = (120, 120, 120)  # Slightly lighter gray
@@ -356,9 +356,9 @@ class ElementalShape:
         """Water ripples pulse with audio"""
         # Square completely disappears when ripples are active, reappears when inactive
         if self.midi_activity > 0.02:
-            self.base_rect.opacity = 0  # Hidden during MIDI activity
+            self.base_rect.opacity = 10  # Hidden during MIDI activity
         else:
-            self.base_rect.opacity = 160  # Visible when no MIDI
+            self.base_rect.opacity = 120  # Visible when no MIDI
         self.base_rect.color = tuple(color)
 
         self.circumference.color = (120, 120, 120)  # Slightly lighter gray

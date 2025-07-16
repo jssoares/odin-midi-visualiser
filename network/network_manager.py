@@ -89,9 +89,7 @@ class NetworkManager:
                 element_freq_level = audio_analyzer.element_frequency_levels.get(element_type, 0.0)
                 emission_probability = 0.1 + (element_freq_level * 0.4)  # 0.1 to 0.5 range
                 if random.random() < emission_probability:
-                    start = element_node.get_current_position()
-                    
-                    # Get Odin's position as base target
+                    element_pos = element_node.get_current_position()
                     odin_pos = self.odin_node.get_current_position()
                     
                     # Get this element's individual panning
@@ -99,36 +97,59 @@ class NetworkManager:
                     if element_type in audio_analyzer.element_panning:
                         element_pan = audio_analyzer.element_panning[element_type]
                     
-                    # Apply panning-based deflection based on element's individual stereo position
-                    base_deflection = 100
-                    pan_intensity = abs(element_pan)  # 0.0 to 1.0
-                    dynamic_deflection = base_deflection + (pan_intensity * 100)  # 100-200 range
+                    # Add subtle random movement to emitters
+                    subtle_offset_x = random.uniform(-8, 8)  # ±8 pixels random movement
+                    subtle_offset_y = random.uniform(-8, 8)  # ±8 pixels random movement
                     
-                    if element_type == "WIND":  # Right side - pan affects vertical
-                        pan_offset_x = 0
-                        pan_offset_y = element_pan * dynamic_deflection
-                    elif element_type == "WATER":  # Left side - pan affects vertical  
-                        pan_offset_x = 0
-                        pan_offset_y = element_pan * dynamic_deflection
-                    elif element_type == "EARTH":  # Bottom - pan affects horizontal
-                        pan_offset_x = element_pan * dynamic_deflection
-                        pan_offset_y = 0
-                    elif element_type == "FIRE":  # Top - pan affects horizontal
-                        pan_offset_x = element_pan * dynamic_deflection
-                        pan_offset_y = 0
-                    else:
-                        pan_offset_x = 0
-                        pan_offset_y = 0
-                    
-                    # Apply the offset to Odin's position
-                    deflected_target = (odin_pos[0] + pan_offset_x, odin_pos[1] + pan_offset_y)
-
-                    # Store the pan offset for the particle's initial trajectory
-                    pan_offset = (pan_offset_x, pan_offset_y)
-
-                    color = element_node.color
-                    particle = ElementalParticle(start, deflected_target, color, self.batch, self.odin_node, pan_offset)
-                    self.particles.append(particle)
+                    if element_type == "FIRE" or element_type == "EARTH":  # North/South elements
+                        # Calculate LEFT and RIGHT emitter positions with subtle movement
+                        left_emitter_pos = (element_pos[0] - 25 + subtle_offset_x, element_pos[1] + subtle_offset_y)
+                        right_emitter_pos = (element_pos[0] + 27 + subtle_offset_x, element_pos[1] + subtle_offset_y)
+                        
+                        # Calculate emission probabilities based on pan strength
+                        left_probability = max(0.2, 0.8 - element_pan)
+                        right_probability = max(0.2, 0.8 + element_pan)
+                        
+                        # LEFT EMITTER
+                        if random.random() < left_probability:
+                            left_particle = ElementalParticle(
+                                left_emitter_pos, odin_pos, element_node.color, 
+                                self.batch, self.odin_node, (0, 0)
+                            )
+                            self.particles.append(left_particle)
+                        
+                        # RIGHT EMITTER
+                        if random.random() < right_probability:
+                            right_particle = ElementalParticle(
+                                right_emitter_pos, odin_pos, element_node.color, 
+                                self.batch, self.odin_node, (0, 0)
+                            )
+                            self.particles.append(right_particle)
+                            
+                    elif element_type == "WIND" or element_type == "WATER":  # East/West elements
+                        # Calculate TOP and BOTTOM emitter positions with subtle movement
+                        top_emitter_pos = (element_pos[0] + subtle_offset_x, element_pos[1] + 23 + subtle_offset_y)
+                        bottom_emitter_pos = (element_pos[0] + subtle_offset_x, element_pos[1] - 18 + subtle_offset_y)
+                        
+                        # Calculate emission probabilities
+                        top_probability = max(0.2, 0.8 - element_pan)
+                        bottom_probability = max(0.2, 0.8 + element_pan)
+                        
+                        # TOP EMITTER
+                        if random.random() < top_probability:
+                            top_particle = ElementalParticle(
+                                top_emitter_pos, odin_pos, element_node.color, 
+                                self.batch, self.odin_node, (0, 0)
+                            )
+                            self.particles.append(top_particle)
+                        
+                        # BOTTOM EMITTER
+                        if random.random() < bottom_probability:
+                            bottom_particle = ElementalParticle(
+                                bottom_emitter_pos, odin_pos, element_node.color, 
+                                self.batch, self.odin_node, (0, 0)
+                            )
+                            self.particles.append(bottom_particle)
                 
                 # Calculate force from this element on Odin
                 # Each active element "pushes" Odin away from its original position
