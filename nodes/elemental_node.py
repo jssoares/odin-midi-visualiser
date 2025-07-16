@@ -54,20 +54,20 @@ class ElementalNode:
         note_in_octave = note % 12  # 0-11 for C, C#, D, D#, E, F, F#, G, G#, A, A#, B
         
         if self.element_type == "EARTH":
-            # Earth gradient: Brown → Darker Browns (no light colors)
+            # Earth gradient: Brown → Dark Orange (updated with orange tones)
             gradient_colors = [
                 [139, 69, 19],    # Dark brown (C)
-                [145, 75, 25],    # 
-                [150, 80, 30],    # 
-                [155, 85, 35],    # 
-                [160, 90, 40],    # Medium brown (E)
-                [155, 85, 45],    # 
-                [150, 80, 50],    # 
-                [145, 75, 55],    # 
-                [140, 70, 60],    # Darker brown (G#)
-                [135, 65, 55],    # 
-                [130, 60, 50],    # 
-                [125, 55, 45]     # Darkest brown (B)
+                [150, 75, 20],    # 
+                [160, 80, 25],    # 
+                [170, 85, 30],    # 
+                [180, 90, 35],    # Brown-orange (E)
+                [190, 85, 25],    # 
+                [200, 80, 15],    # 
+                [210, 75, 10],    # 
+                [220, 70, 5],     # Dark orange (G#)
+                [200, 65, 15],    # 
+                [180, 60, 25],    # 
+                [160, 55, 35]     # Back to brown-orange (B)
             ]
         elif self.element_type == "WIND":
             # Wind gradient: Sky Blue → Darker Cyan (no white)
@@ -86,20 +86,20 @@ class ElementalNode:
                 [145, 150, 180]   # Darkest blue-grey (B)
             ]
         elif self.element_type == "FIRE":
-            # Fire gradient: Deep Red → Red → Orange → Yellow
+            # Fire gradient: Deep Red → Bright Red → Orange → Yellow (more fiery)
             gradient_colors = [
-                [220, 20, 20],    # Deep red (C)
-                [230, 30, 15],    # 
-                [240, 40, 10],    # 
-                [250, 50, 5],     # 
-                [255, 60, 0],     # Red-orange (E)
+                [180, 0, 0],      # Deep red (C)
+                [200, 10, 0],     # 
+                [220, 20, 0],     # 
+                [240, 30, 0],     # 
+                [255, 40, 0],     # Bright red (E)
+                [255, 60, 0],     # 
                 [255, 80, 0],     # 
                 [255, 100, 0],    # 
-                [255, 120, 0],    # 
-                [255, 140, 0],    # Orange (G#)
+                [255, 120, 0],    # Orange (G#)
+                [255, 140, 10],   # 
                 [255, 160, 20],   # 
-                [255, 180, 40],   # 
-                [255, 200, 60]    # Yellow-orange (B)
+                [255, 180, 30]    # Bright orange-yellow (B)
             ]
         elif self.element_type == "WATER":
             # Water gradient: Deep Blue → Medium Blue (no light colors)
