@@ -156,19 +156,32 @@ class OdinNode:
         current_pos = self.get_current_position()
         
         for particle_data in self.particle_sink:
-            # Generate random 3D direction (sphere distribution)
-            # This naturally creates particles going in all directions including toward viewer
-            phi = random.uniform(0, 2 * math.pi)  # Horizontal angle
-            theta = random.uniform(0, math.pi)     # Vertical angle (0 to π for full sphere)
-            
-            # Convert spherical to cartesian coordinates
-            direction = (
-                math.sin(theta) * math.cos(phi),  # X component
-                math.sin(theta) * math.sin(phi),  # Y component  
-            )
-            
+            # Decide particle direction explicitly
+            direction_chance = random.random()
+        
+            if direction_chance < 0.05:  # 5% chance - toward viewer
+                direction = (
+                    random.uniform(-0.2, 0.2),    # Small horizontal spread
+                    random.uniform(-0.2, 0.2),    # Small vertical spread
+                )
+                particle_type = "toward_viewer"
+            elif direction_chance < 0.05:  # Next 5% chance - away from viewer  
+                angle = random.uniform(0, 2 * math.pi)
+                direction = (
+                    math.cos(angle) * 0.5,  # Slower radial movement
+                    math.sin(angle) * 0.5,  # Slower radial movement
+                )
+                particle_type = "away_from_viewer"
+            else:  # Remaining 90% - screen plane explosion
+                angle = random.uniform(0, 2 * math.pi)
+                direction = (
+                    math.cos(angle),  # Normal radial movement
+                    math.sin(angle),  # Normal radial movement
+                )
+                particle_type = "screen_plane"
+
             explosion_particle = ExplosionParticle3D(
-                current_pos, direction, particle_data['color'], batch
+                current_pos, direction, particle_data['color'], batch, particle_type
             )
             explosion_particles_list.append(explosion_particle)
         
