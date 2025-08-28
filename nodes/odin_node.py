@@ -1,5 +1,6 @@
 import time
 import math
+import random
 from pyglet import shapes, text
 from visual.shapes import CurvedOdinShape
 from visual.particles import ExplosionParticle
@@ -152,16 +153,43 @@ class OdinNode:
             return
             
         current_pos = self.get_current_position()
+
+        # Calculate how many particles to send toward camera
+        total_particles = len(self.particle_sink)
+        toward_camera_count = max(1, total_particles // 4)  # 25% come toward camera
+        radial_count = total_particles - toward_camera_count
         
-        # Create explosion particles in all directions
-        for i, particle_data in enumerate(self.particle_sink):
-            angle = (2 * math.pi * i) / len(self.particle_sink)
+        particle_index = 0
+
+        # Create radial explosion particles (existing behavior)
+        for i in range(radial_count):
+            angle = (2 * math.pi * i) / radial_count
             direction = (math.cos(angle), math.sin(angle))
             
+            depth_factor = 1.0  # Normal depth for radial particles
+            
             explosion_particle = ExplosionParticle(
-                current_pos, direction, particle_data['color'], batch
+                current_pos, direction, self.particle_sink[particle_index]['color'], batch, depth_factor
             )
             explosion_particles_list.append(explosion_particle)
+            particle_index += 1
+        
+        # Create particles coming toward camera (moving down screen)
+        for i in range(toward_camera_count):
+            # More dramatic downward movement for "straight at camera" effect
+            direction = (
+                random.uniform(-0.2, 0.2),  # Even smaller horizontal spread
+                random.uniform(-1.0, -0.6)  # More strongly downward (toward camera)
+            )
+            
+            # These particles get higher depth factors for more dramatic growth
+            depth_factor = random.uniform(3.0, 6.0)  # Even more dramatic growth
+            
+            explosion_particle = ExplosionParticle(
+                current_pos, direction, self.particle_sink[particle_index]['color'], batch, depth_factor
+            )
+            explosion_particles_list.append(explosion_particle)
+            particle_index += 1
         
         # Clear the sink
         self.particle_sink.clear()
