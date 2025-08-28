@@ -1,8 +1,10 @@
 import time
 import math
+import random
 from pyglet import shapes, text
 from visual.shapes import CurvedOdinShape
 from visual.particles import ExplosionParticle
+from visual.particles import ExplosionParticle3D
 
 class OdinNode:
     """Special node class for Odin with audio-reactive morphing"""
@@ -147,18 +149,25 @@ class OdinNode:
         return False
 
     def explode_particles(self, explosion_particles_list, batch):
-        """Release all particles from sink in explosion pattern"""
+        """Release all particles from sink in 3D explosion pattern"""
         if not self.particle_sink:
             return
             
         current_pos = self.get_current_position()
         
-        # Create explosion particles in all directions
-        for i, particle_data in enumerate(self.particle_sink):
-            angle = (2 * math.pi * i) / len(self.particle_sink)
-            direction = (math.cos(angle), math.sin(angle))
+        for particle_data in self.particle_sink:
+            # Generate random 3D direction (sphere distribution)
+            # This naturally creates particles going in all directions including toward viewer
+            phi = random.uniform(0, 2 * math.pi)  # Horizontal angle
+            theta = random.uniform(0, math.pi)     # Vertical angle (0 to π for full sphere)
             
-            explosion_particle = ExplosionParticle(
+            # Convert spherical to cartesian coordinates
+            direction = (
+                math.sin(theta) * math.cos(phi),  # X component
+                math.sin(theta) * math.sin(phi),  # Y component  
+            )
+            
+            explosion_particle = ExplosionParticle3D(
                 current_pos, direction, particle_data['color'], batch
             )
             explosion_particles_list.append(explosion_particle)
