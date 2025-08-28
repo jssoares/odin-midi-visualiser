@@ -154,23 +154,43 @@ class OdinNode:
             return
             
         current_pos = self.get_current_position()
+
+        # Calculate how many particles to send toward camera
+        total_particles = len(self.particle_sink)
+        toward_camera_count = max(1, total_particles // 4)  # 25% come toward camera
+        radial_count = total_particles - toward_camera_count
         
-        for particle_data in self.particle_sink:
-            # Generate random 3D direction (sphere distribution)
-            # This naturally creates particles going in all directions including toward viewer
-            phi = random.uniform(0, 2 * math.pi)  # Horizontal angle
-            theta = random.uniform(0, math.pi)     # Vertical angle (0 to π for full sphere)
+        particle_index = 0
+
+        # Create radial explosion particles (existing behavior)
+        for i in range(radial_count):
+            angle = (2 * math.pi * i) / radial_count
+            direction = (math.cos(angle), math.sin(angle))
             
-            # Convert spherical to cartesian coordinates
-            direction = (
-                math.sin(theta) * math.cos(phi),  # X component
-                math.sin(theta) * math.sin(phi),  # Y component  
-            )
+            depth_factor = 1.0  # Normal depth for radial particles
             
-            explosion_particle = ExplosionParticle3D(
-                current_pos, direction, particle_data['color'], batch
+            explosion_particle = ExplosionParticle(
+                current_pos, direction, self.particle_sink[particle_index]['color'], batch, depth_factor
             )
             explosion_particles_list.append(explosion_particle)
+            particle_index += 1
+        
+        # Create particles coming toward camera (moving down screen)
+        for i in range(toward_camera_count):
+            # More dramatic downward movement for "straight at camera" effect
+            direction = (
+                random.uniform(-0.2, 0.2),  # Even smaller horizontal spread
+                random.uniform(-1.0, -0.6)  # More strongly downward (toward camera)
+            )
+            
+            # These particles get higher depth factors for more dramatic growth
+            depth_factor = random.uniform(3.0, 6.0)  # Even more dramatic growth
+            
+            explosion_particle = ExplosionParticle(
+                current_pos, direction, self.particle_sink[particle_index]['color'], batch, depth_factor
+            )
+            explosion_particles_list.append(explosion_particle)
+            particle_index += 1
         
         # Clear the sink
         self.particle_sink.clear()
