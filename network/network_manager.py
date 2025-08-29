@@ -102,29 +102,44 @@ class NetworkManager:
                     subtle_offset_y = random.uniform(-8, 8)  # ±8 pixels random movement
                     
                     if element_type == "FIRE" or element_type == "EARTH":  # North/South elements
+                        # Get this element's individual panning
+                        element_pan = 0.0
+                        if element_type in audio_analyzer.element_panning:
+                            element_pan = audio_analyzer.element_panning[element_type]
+                        
                         # Calculate LEFT and RIGHT emitter positions with subtle movement
-                        left_emitter_pos = (element_pos[0] - 25 + subtle_offset_x, element_pos[1] + subtle_offset_y)
-                        right_emitter_pos = (element_pos[0] + 27 + subtle_offset_x, element_pos[1] + subtle_offset_y)
+                        left_emitter_pos = (element_pos[0] - 30 + subtle_offset_x, element_pos[1] + subtle_offset_y)
+                        right_emitter_pos = (element_pos[0] + 30 + subtle_offset_x, element_pos[1] + subtle_offset_y)
                         
-                        # Calculate emission probabilities based on pan strength
-                        left_probability = max(0.2, 0.8 - element_pan)
-                        right_probability = max(0.2, 0.8 + element_pan)
+                        # Calculate emission probabilities based on stereo panning
+                        # Pan ranges from -1.0 (left) to +1.0 (right)
+                        if element_pan < -0.1:  # Panned left
+                            left_probability = 0.9   # High chance from left
+                            right_probability = 0.1  # Low chance from right
+                        elif element_pan > 0.1:  # Panned right
+                            left_probability = 0.1   # Low chance from left
+                            right_probability = 0.9  # High chance from right
+                        else:  # Center or no panning
+                            left_probability = 0.5   # Equal chance from both sides
+                            right_probability = 0.5
                         
-                        # LEFT EMITTER
-                        if random.random() < left_probability:
-                            left_particle = ElementalParticle(
-                                left_emitter_pos, odin_pos, element_node.color, 
-                                self.batch, self.odin_node, (0, 0)
-                            )
-                            self.particles.append(left_particle)
-                        
-                        # RIGHT EMITTER
-                        if random.random() < right_probability:
-                            right_particle = ElementalParticle(
-                                right_emitter_pos, odin_pos, element_node.color, 
-                                self.batch, self.odin_node, (0, 0)
-                            )
-                            self.particles.append(right_particle)
+                            # LEFT EMITTER
+                            if random.random() < left_probability:
+                                left_particle = ElementalParticle(
+                                    left_emitter_pos, odin_pos, element_node.color, 
+                                    self.batch, self.odin_node, (0, 0), 
+                                    emission_direction=(-1, 0)  # Emit westward
+                                )
+                                self.particles.append(left_particle)
+
+                            # RIGHT EMITTER
+                            if random.random() < right_probability:
+                                right_particle = ElementalParticle(
+                                    right_emitter_pos, odin_pos, element_node.color, 
+                                    self.batch, self.odin_node, (0, 0),
+                                    emission_direction=(1, 0)  # Emit eastward
+                                )
+                                self.particles.append(right_particle)
                             
                     elif element_type == "WIND" or element_type == "WATER":  # East/West elements
                         # Calculate TOP and BOTTOM emitter positions with subtle movement
