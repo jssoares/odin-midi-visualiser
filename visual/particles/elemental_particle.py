@@ -3,12 +3,11 @@ import math
 from pyglet import shapes
 
 class ElementalParticle:
-    def __init__(self, start_pos, initial_target, color, batch, odin_node=None, pan_offset=(0, 0), emission_direction=None):
+    def __init__(self, start_pos, initial_target, color, batch, odin_node=None, pan_offset=(0, 0), emission_direction=None, element_type = None):
         self.x, self.y = start_pos
         self.target_x, self.target_y = initial_target
         self.odin_node = odin_node
         self.color = color
-        self.circle = shapes.Circle(self.x, self.y, radius=2, color=tuple(color), batch=batch)
         self.speed = random.uniform(40, 100)
         self.alive = True
         
@@ -31,6 +30,14 @@ class ElementalParticle:
         # Store original straight-line trajectory for reference
         self.original_target = initial_target
 
+        self.color = color
+        
+        # Use passed element type or detect from color as fallback
+        self.element_type = element_type
+        
+        # Create element-specific shape
+        self.shape_elements = self.create_element_shape(color, batch)
+
     def update(self, dt):
         self.elapsed_time += dt
         
@@ -40,9 +47,26 @@ class ElementalParticle:
             if self.emission_direction:
                 self.x += self.emission_direction[0] * self.speed * dt
                 self.y += self.emission_direction[1] * self.speed * dt
-            
-            self.circle.x = int(self.x)
-            self.circle.y = int(self.y)
+
+            # Update visual position during emission phase
+            if self.element_type == "FIRE":
+                left_line, right_line = self.shape_elements
+                size = 3
+                left_line.x, left_line.y = int(self.x - size), int(self.y - size//2)
+                left_line.x2, left_line.y2 = int(self.x), int(self.y + size//2)
+                right_line.x, right_line.y = int(self.x), int(self.y + size//2)
+                right_line.x2, right_line.y2 = int(self.x + size), int(self.y - size//2)
+            elif self.element_type == "WIND":
+                line = self.shape_elements[0]
+                line.x, line.y = int(self.x-3), int(self.y)
+                line.x2, line.y2 = int(self.x+3), int(self.y)
+            elif self.element_type == "EARTH":
+                square = self.shape_elements[0]
+                square.x, square.y = int(self.x-1), int(self.y-1)
+            else:
+                circle = self.shape_elements[0]
+                circle.x, circle.y = int(self.x), int(self.y)
+
             return
         
         # End emission phase, start targeting Odin
@@ -99,5 +123,61 @@ class ElementalParticle:
             self.x += direction_x * self.speed * dt
             self.y += direction_y * self.speed * dt
             
-        self.circle.x = int(self.x)
-        self.circle.y = int(self.y)
+        if self.element_type == "FIRE":
+            # Update chevron lines
+            left_line, right_line = self.shape_elements
+            size = 3
+            left_line.x, left_line.y = int(self.x - size), int(self.y - size//2)
+            left_line.x2, left_line.y2 = int(self.x), int(self.y + size//2)
+            right_line.x, right_line.y = int(self.x), int(self.y + size//2)
+            right_line.x2, right_line.y2 = int(self.x + size), int(self.y - size//2)
+
+        elif self.element_type == "WIND":
+            # Update horizontal line
+            line = self.shape_elements[0]
+            line.x, line.y = int(self.x-3), int(self.y)
+            line.x2, line.y2 = int(self.x+3), int(self.y)
+
+        elif self.element_type == "EARTH":
+            # Update square
+            square = self.shape_elements[0]
+            square.x, square.y = int(self.x-1), int(self.y-1)
+
+        else:
+            # Update circle (water and generic)
+            circle = self.shape_elements[0]
+            circle.x, circle.y = int(self.x), int(self.y)
+
+    def create_element_shape(self, color, batch):
+        """Create element-specific particle shape"""
+        if self.element_type == "FIRE":
+            # Small chevron
+            size = 3
+            left_line = shapes.Line(
+                int(self.x - size), int(self.y - size//2),
+                int(self.x), int(self.y + size//2),
+                thickness=2, color=tuple(color), batch=batch
+            )
+            right_line = shapes.Line(
+                int(self.x), int(self.y + size//2), 
+                int(self.x + size), int(self.y - size//2),
+                thickness=2, color=tuple(color), batch=batch
+            )
+            return [left_line, right_line]
+        
+        elif self.element_type == "WATER":
+            # Small teardrop (circle)
+            return [shapes.Circle(self.x, self.y, radius=2, color=tuple(color), batch=batch)]
+        
+        elif self.element_type == "WIND":
+            # Small horizontal line (dash)
+            return [shapes.Line(int(self.x-3), int(self.y), int(self.x+3), int(self.y), 
+                            thickness=2, color=tuple(color), batch=batch)]
+        
+        elif self.element_type == "EARTH":
+            # Small square
+            return [shapes.Rectangle(int(self.x-1), int(self.y-1), 2, 2, color=tuple(color), batch=batch)]
+        
+        else:
+            # Default circle
+            return [shapes.Circle(self.x, self.y, radius=2, color=tuple(color), batch=batch)]

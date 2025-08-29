@@ -105,7 +105,9 @@ class MIDIVisualizer(pyglet.window.Window):
                 self.video_recorder.capture_frame(dt, self.width, self.height)
                 
         except Exception as e:
+            import traceback
             print(f"❌ Update error: {e}")
+            traceback.print_exc()
     
 
     

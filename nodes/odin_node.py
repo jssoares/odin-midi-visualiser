@@ -143,7 +143,8 @@ class OdinNode:
         if len(self.particle_sink) < self.max_sink_capacity:
             self.particle_sink.append({
                 'color': particle.color,
-                'added_time': time.time()
+                'added_time': time.time(),
+                'element_type': particle.element_type,
             })
             return True
         return False
@@ -181,9 +182,26 @@ class OdinNode:
                 particle_type = "screen_plane"
 
             explosion_particle = ExplosionParticle3D(
-                current_pos, direction, particle_data['color'], batch, particle_type
+                current_pos,
+                direction,
+                particle_data['color'],
+                batch,
+                particle_type,
+                element_type=particle_data.get('element_type', 'GENERIC'),
+
             )
             explosion_particles_list.append(explosion_particle)
         
         # Clear the sink
         self.particle_sink.clear()
+
+def add_particle_to_sink(self, particle):
+    """Add a particle to Odin's internal sink"""
+    if len(self.particle_sink) < self.max_sink_capacity:
+        self.particle_sink.append({
+            'color': particle.color,
+            'element_type': particle.element_type,  # ADD THIS
+            'added_time': time.time()
+        })
+        return True
+    return False
