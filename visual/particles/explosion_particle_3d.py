@@ -1,9 +1,11 @@
+import math
 import random
 from pyglet import shapes
 
 class ExplosionParticle3D:
     def __init__(self, start_pos, direction, color, batch, particle_type="screen_plane"):
         self.x, self.y = start_pos
+        self.start_x, self.start_y = start_pos  # Store starting position
         self.particle_type = particle_type  # Store the particle type
         
         if particle_type == "toward_viewer":
@@ -42,12 +44,26 @@ class ExplosionParticle3D:
         self.y += self.vy * dt  
         self.z += self.vz * dt
         
+        # Kill away_from_viewer particles when they're far enough from START position
+        if self.particle_type == "away_from_viewer":
+            distance_from_start = math.sqrt((self.x - self.start_x)**2 + (self.y - self.start_y)**2 + self.z**2)
+            if distance_from_start > 2:  # Reasonable threshold
+                self.alive = False
+                return
+        
         # Add acceleration for toward_viewer particles to get to you faster
         if self.particle_type == "toward_viewer":
             # Simple acceleration - they speed up over time
             self.vz += 50 * dt  # Constant acceleration toward viewer
+        elif self.particle_type == "away_from_viewer":
+            # Accelerate away from viewer - they speed up going away
+            self.vz -= 100000 * dt  # Double the acceleration away from viewer
         
-        self.life -= dt * 0.5
+        # Adjust fade rate based on particle type
+        if self.particle_type == "away_from_viewer":
+            self.life -= dt * 100.0  # 10x faster fade than normal
+        else:
+            self.life -= dt * 0.5  # Normal fade rate
         
         if self.life <= 0:
             self.alive = False
