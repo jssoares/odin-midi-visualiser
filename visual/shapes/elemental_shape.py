@@ -92,8 +92,6 @@ class ElementalShape:
             self.crystals.append(crystal)
     
     def create_wind_shape(self):
-        import math
-        
         R = self.size  # Circle radius
         
         """Arc of influence"""
@@ -147,9 +145,7 @@ class ElementalShape:
             stream.opacity = 0
             self.wind_streams.append(stream)
     
-    def create_fire_shape(self):
-        import math
-        
+    def create_fire_shape(self):        
         R = self.size  # Circle radius
         
         """Arc of influence"""
@@ -182,27 +178,40 @@ class ElementalShape:
         )
         self.base_rect.opacity = 160
         
-        # Flame tips (small circles that flicker with audio)
-        self.flame_tips = []
-        flame_positions = [
-            (0, self.size),                    # Main tip
-            (-self.size * 0.4, self.size * 0.7),    # Left tip
-            (self.size * 0.4, self.size * 0.7),     # Right tip
-            (-self.size * 0.2, self.size * 1.2),    # Left high
-            (self.size * 0.2, self.size * 1.2),     # Right high
+        # Flame chevrons (3 V-shaped lines stacked vertically with diminishing sizes)
+        self.flame_chevrons = []
+
+        # Three chevrons stacked vertically, getting smaller as they go up
+        chevron_configs = [
+            (0, self.size * 0.3, 12),    # Bottom chevron - largest
+            (0, self.size * 0.6, 8),     # Middle chevron - medium  
+            (0, self.size * 0.9, 4),     # Top chevron - smallest
         ]
-        
-        for dx, dy in flame_positions:
-            tip = shapes.Circle(
-                int(self.x + dx), int(self.y + dy), 2,  # Changed from 4 to 2
+
+        for dx, dy, chevron_size in chevron_configs:
+            chevron_x = self.x + dx
+            chevron_y = self.y + dy
+            
+            # Create two lines forming a V shape (chevron pointing up)
+            left_line = shapes.Line(
+                int(chevron_x - chevron_size), int(chevron_y - chevron_size//2),
+                int(chevron_x), int(chevron_y + chevron_size//2),
+                thickness=2,
                 color=tuple(self.base_color), batch=self.batch
             )
-            tip.opacity = 0
-            self.flame_tips.append(tip)
+            left_line.opacity = 0
+            
+            right_line = shapes.Line(
+                int(chevron_x), int(chevron_y + chevron_size//2),
+                int(chevron_x + chevron_size), int(chevron_y - chevron_size//2),
+                thickness=2,
+                color=tuple(self.base_color), batch=self.batch
+            )
+            right_line.opacity = 0
+            
+            self.flame_chevrons.append((left_line, right_line))
     
     def create_water_shape(self):
-        import math
-        
         R = self.size  # Circle radius
         
         """Arc of influence"""
@@ -338,19 +347,29 @@ class ElementalShape:
         circumference_opacity = 60 + int(self.audio_intensity * 30)  # Subtle pulse with audio
         self.circumference.opacity = circumference_opacity
 
-        # Only show fire tips when there's audio activity
-        for i, tip in enumerate(self.flame_tips):
-            if self.audio_intensity > 0.02:  # Lower threshold for quicker response
-                # Flicker effect - different tips react differently
+        # Only show fire chevrons when there's audio activity
+        for i, (left_line, right_line) in enumerate(self.flame_chevrons):
+            if self.audio_intensity > 0.02:
+                # Flicker effect - different chevrons react differently, bottom chevron most responsive
                 flicker_intensity = self.audio_intensity + math.sin(time.time() * (5 + i)) * 0.2
-                tip_opacity = int(max(0, min(255, flicker_intensity * 240)))  # Quicker fade-in
+                # Bottom chevron (i=0) gets full intensity, top chevrons get progressively less
+                intensity_multiplier = 1.0 - (i * 0.2)  # 1.0, 0.8, 0.6
+                chevron_opacity = int(max(0, min(255, flicker_intensity * 240 * intensity_multiplier)))
+                
                 brighter_color = [min(255, int(c * 1.3)) for c in color]
-                tip.color = tuple(brighter_color)
-                tip.opacity = tip_opacity
-                # Tips grow with audio - BIGGER FIRE ANIMATION
-                tip.radius = int(3 + self.audio_intensity * 5)
+                
+                left_line.color = tuple(brighter_color)
+                right_line.color = tuple(brighter_color)
+                left_line.opacity = chevron_opacity
+                right_line.opacity = chevron_opacity
+                
+                # Make chevrons grow with audio by increasing thickness
+                new_thickness = int(2 + self.audio_intensity * 3 * intensity_multiplier)
+                left_line.width = new_thickness
+                right_line.width = new_thickness
             else:
-                tip.opacity = 0  # Hide when inactive
+                left_line.opacity = 0
+                right_line.opacity = 0
     
     def update_water(self, color):
         """Water ripples pulse with audio"""

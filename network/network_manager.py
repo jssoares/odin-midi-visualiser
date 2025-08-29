@@ -128,7 +128,8 @@ class NetworkManager:
                                 left_particle = ElementalParticle(
                                     left_emitter_pos, odin_pos, element_node.color, 
                                     self.batch, self.odin_node, (0, 0), 
-                                    emission_direction=(-1, 0)  # Emit westward
+                                    emission_direction=(-1, 0),  # Emit westward
+                                    element_type=element_node.element_type,
                                 )
                                 self.particles.append(left_particle)
 
@@ -137,7 +138,8 @@ class NetworkManager:
                                 right_particle = ElementalParticle(
                                     right_emitter_pos, odin_pos, element_node.color, 
                                     self.batch, self.odin_node, (0, 0),
-                                    emission_direction=(1, 0)  # Emit eastward
+                                    emission_direction=(1, 0),  # Emit eastward
+                                    element_type=element_node.element_type,
                                 )
                                 self.particles.append(right_particle)
                             
