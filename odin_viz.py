@@ -84,7 +84,7 @@ class MIDIVisualizer(pyglet.window.Window):
             # Update network components
             self.network_manager.update_nodes_and_connections(dt, audio_level)
             self.network_manager.update_particles(dt)
-            self.network_manager.update_odin_from_elements(self.midi_processor, self.audio_analyzer)
+            self.network_manager.update_odin_from_elements(self.midi_processor, self.audio_analyzer, dt)
 
             # Update visual effects
             self.visual_manager.update_effects(dt, total_activity)

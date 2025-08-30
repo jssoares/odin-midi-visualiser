@@ -14,6 +14,9 @@ class NetworkManager:
 
         self.visualizer_ref = visualizer_ref
 
+        self.water_emission_cooldown = 0.0
+        self.water_emission_interval = 0.1  # Emit every 0.1 seconds (10 particles per second)
+
         # Network
         self.nodes = []
         self.connections = []
@@ -57,7 +60,7 @@ class NetworkManager:
         print("   💧 WATER (CH3) - Deep blue drops with rippling waves")
         print("   ⚡ ODIN (Central) - Audio-reactive morphing square→circle")
 
-    def update_odin_from_elements(self, midi_processor, audio_analyzer):
+    def update_odin_from_elements(self, midi_processor, audio_analyzer, dt):
         """Update Odin based on elemental activity - elements can push/pull Odin around"""
         if not self.odin_node:
             return
@@ -88,7 +91,50 @@ class NetworkManager:
                 # NEW: Base emission on frequency activity
                 element_freq_level = audio_analyzer.element_frequency_levels.get(element_type, 0.0)
                 emission_probability = 0.1 + (element_freq_level * 0.4)  # 0.1 to 0.5 range
-                if random.random() < emission_probability:
+                # Handle WATER emission separately with controlled rate
+                if element_type == "WATER":
+                    # Update cooldown timer
+                    self.water_emission_cooldown -= dt
+                    
+                    # Emit only when cooldown reaches zero
+                    if self.water_emission_cooldown <= 0:
+                        element_pos = element_node.get_current_position()
+                        odin_pos = self.odin_node.get_current_position()
+                        
+                        # Create larger droplet clusters for thicker stream
+                        cluster_size = random.choice([4, 5, 6])  # Increased from [2, 3, 4]
+                        for i in range(cluster_size):
+                            # Organic droplet spacing with wider spread for thickness
+                            angle_spread = random.uniform(-25, 25)  # Increased from ±15 to ±25 degrees
+                            distance_from_source = random.uniform(1, 12)  # Increased max from 8 to 12
+                            
+                            # Calculate organic position with angular variation
+                            base_angle = math.atan2(odin_pos[1] - element_node.original_y, 
+                                                odin_pos[0] - element_node.original_x)
+                            varied_angle = base_angle + math.radians(angle_spread)
+                            
+                            droplet_start_pos = (
+                                element_node.original_x + math.cos(varied_angle) * distance_from_source,
+                                element_node.original_y + math.sin(varied_angle) * distance_from_source
+                            )
+                            
+                            water_particle = ElementalParticle(
+                                droplet_start_pos, odin_pos, element_node.color,
+                                self.batch, self.odin_node, (0, 0),
+                                element_type=element_node.element_type,
+                            )
+                            
+                            # Organic water properties - each droplet slightly different
+                            water_particle.curve_intensity = random.uniform(0.2, 0.4)
+                            water_particle.curve_start_time = random.uniform(0.8, 1.4)
+                            water_particle.speed = random.uniform(55, 80)
+                            water_particle.stream_alignment_strength = random.uniform(0.4, 0.8)
+                            
+                            self.particles.append(water_particle)
+                        
+                        # Faster emission for denser stream
+                        self.water_emission_cooldown = random.uniform(0.04, 0.08)  # Increased frequency
+                elif random.random() < emission_probability:
                     element_pos = element_node.get_current_position()
                     odin_pos = self.odin_node.get_current_position()
                     
@@ -143,7 +189,7 @@ class NetworkManager:
                                 )
                                 self.particles.append(right_particle)
                             
-                    elif element_type == "WIND" or element_type == "WATER":  # East/West elements
+                    elif element_type == "WIND":  # East/West elements
                         # Calculate TOP and BOTTOM emitter positions with subtle movement
                         top_emitter_pos = (element_pos[0] + subtle_offset_x, element_pos[1] + 23 + subtle_offset_y)
                         bottom_emitter_pos = (element_pos[0] + subtle_offset_x, element_pos[1] - 18 + subtle_offset_y)
@@ -156,7 +202,8 @@ class NetworkManager:
                         if random.random() < top_probability:
                             top_particle = ElementalParticle(
                                 top_emitter_pos, odin_pos, element_node.color, 
-                                self.batch, self.odin_node, (0, 0)
+                                self.batch, self.odin_node, (0, 0),
+                                element_type=element_node.element_type,
                             )
                             self.particles.append(top_particle)
                         
@@ -164,7 +211,8 @@ class NetworkManager:
                         if random.random() < bottom_probability:
                             bottom_particle = ElementalParticle(
                                 bottom_emitter_pos, odin_pos, element_node.color, 
-                                self.batch, self.odin_node, (0, 0)
+                                self.batch, self.odin_node, (0, 0),
+                                element_type=element_node.element_type,
                             )
                             self.particles.append(bottom_particle)
                 
@@ -274,7 +322,11 @@ class NetworkManager:
         # Update particles and check for particles reaching Odin
         particles_to_remove = []
         for i, particle in enumerate(self.particles):
-            particle.update(dt)
+            if particle.element_type == "WATER":
+                particle.update(dt, self.particles)  # Pass the full particle list
+            else:
+                particle.update(dt)
+                
             if not particle.alive:
                 particles_to_remove.append(i)
             else:

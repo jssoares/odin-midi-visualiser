@@ -139,14 +139,27 @@ class OdinNode:
         pass
 
     def add_particle_to_sink(self, particle):
-        """Add a particle to Odin's internal sink"""
+        """Add a particle to Odin's internal sink with sampling for water"""
         if len(self.particle_sink) < self.max_sink_capacity:
-            self.particle_sink.append({
-                'color': particle.color,
-                'added_time': time.time(),
-                'element_type': particle.element_type,
-            })
-            return True
+            # For water particles, only store every 20th particle
+            if particle.element_type == "WATER":
+                if random.random() < 0.1:  # 10% chance (1 in 10)
+                    self.particle_sink.append({
+                        'color': particle.color,
+                        'element_type': particle.element_type,
+                        'added_time': time.time()
+                    })
+                    return True
+                else:
+                    return True  # Particle is "consumed" but not stored
+            else:
+                # Non-water particles are stored normally
+                self.particle_sink.append({
+                    'color': particle.color,
+                    'element_type': getattr(particle, 'element_type', 'GENERIC'),
+                    'added_time': time.time()
+                })
+                return True
         return False
 
     def explode_particles(self, explosion_particles_list, batch):
@@ -157,51 +170,37 @@ class OdinNode:
         current_pos = self.get_current_position()
         
         for particle_data in self.particle_sink:
+            # Get element type from stored data
+            element_type = particle_data.get('element_type', 'GENERIC')
+            
             # Decide particle direction explicitly
             direction_chance = random.random()
         
             if direction_chance < 0.05:  # 5% chance - toward viewer
                 direction = (
-                    random.uniform(-0.2, 0.2),    # Small horizontal spread
-                    random.uniform(-0.2, 0.2),    # Small vertical spread
+                    random.uniform(-0.2, 0.2),
+                    random.uniform(-0.2, 0.2),
                 )
                 particle_type = "toward_viewer"
-            elif direction_chance < 0.05:  # Next 5% chance - away from viewer  
+            elif direction_chance < 0.10:  # Next 5% chance - away from viewer  
                 angle = random.uniform(0, 2 * math.pi)
                 direction = (
-                    math.cos(angle) * 0.5,  # Slower radial movement
-                    math.sin(angle) * 0.5,  # Slower radial movement
+                    math.cos(angle) * 0.5,
+                    math.sin(angle) * 0.5,
                 )
                 particle_type = "away_from_viewer"
             else:  # Remaining 90% - screen plane explosion
                 angle = random.uniform(0, 2 * math.pi)
                 direction = (
-                    math.cos(angle),  # Normal radial movement
-                    math.sin(angle),  # Normal radial movement
+                    math.cos(angle),
+                    math.sin(angle),
                 )
                 particle_type = "screen_plane"
 
             explosion_particle = ExplosionParticle3D(
-                current_pos,
-                direction,
-                particle_data['color'],
-                batch,
-                particle_type,
-                element_type=particle_data.get('element_type', 'GENERIC'),
-
+                current_pos, direction, particle_data['color'], batch, particle_type, element_type
             )
             explosion_particles_list.append(explosion_particle)
         
         # Clear the sink
         self.particle_sink.clear()
-
-def add_particle_to_sink(self, particle):
-    """Add a particle to Odin's internal sink"""
-    if len(self.particle_sink) < self.max_sink_capacity:
-        self.particle_sink.append({
-            'color': particle.color,
-            'element_type': particle.element_type,  # ADD THIS
-            'added_time': time.time()
-        })
-        return True
-    return False

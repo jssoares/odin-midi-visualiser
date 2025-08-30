@@ -92,19 +92,44 @@ class ExplosionParticle3D:
                 right_line.opacity = opacity
                 left_line.width = max(1, int(2 * perspective_scale))
                 right_line.width = max(1, int(2 * perspective_scale))
+
             elif self.element_type == "WIND":
-                line = self.shape_elements[0]
-                size = int(3 * perspective_scale)
-                line.x, line.y = int(self.x-size), int(self.y)
-                line.x2, line.y2 = int(self.x+size), int(self.y)
-                line.opacity = opacity
-                line.width = max(1, int(2 * perspective_scale))
+                # Enhanced 3-segment S-curve for wind (matching elemental particles)
+                if len(self.shape_elements) >= 3:
+                    line1, line2, line3 = self.shape_elements[0], self.shape_elements[1], self.shape_elements[2]
+                    size = int(3 * perspective_scale)
+                    
+                    line1.x, line1.y = int(self.x - size*1.3), int(self.y - size*0.7)
+                    line1.x2, line1.y2 = int(self.x - size*0.3), int(self.y)
+                    line2.x, line2.y = int(self.x - size*0.3), int(self.y)
+                    line2.x2, line2.y2 = int(self.x + size*0.3), int(self.y)
+                    line3.x, line3.y = int(self.x + size*0.3), int(self.y)
+                    line3.x2, line3.y2 = int(self.x + size*1.3), int(self.y - size*0.7)
+                    
+                    line1.opacity = opacity
+                    line2.opacity = opacity
+                    line3.opacity = opacity
+                    line1.width = max(1, int(2 * perspective_scale))
+                    line2.width = max(1, int(2 * perspective_scale))
+                    line3.width = max(1, int(2 * perspective_scale))
+
             elif self.element_type == "EARTH":
                 square = self.shape_elements[0]
                 size = max(1, int(2 * perspective_scale))
                 square.x, square.y = int(self.x-size//2), int(self.y-size//2)
                 square.width, square.height = size, size
                 square.opacity = opacity
+                
+            elif self.element_type == "WATER":
+                # WATER shape support added
+                tri = self.shape_elements[0]
+                size = int(3 * perspective_scale)
+                # Calculate triangle vertices relative to current position with perspective
+                tri.x1, tri.y1 = int(self.x + size), int(self.y)              # tip
+                tri.x2, tri.y2 = int(self.x - size*0.7), int(self.y - size*0.7)  # bottom back
+                tri.x3, tri.y3 = int(self.x - size*0.7), int(self.y + size*0.7)  # top back
+                tri.opacity = opacity
+                
             else:
                 circle = self.shape_elements[0]
                 circle.radius = projected_radius
@@ -132,13 +157,33 @@ class ExplosionParticle3D:
             return [left_line, right_line]
         
         elif self.element_type == "WATER":
-            # Small teardrop (circle)
-            return [shapes.Circle(self.x, self.y, radius=2, color=tuple(color), batch=batch)]
+            # Small horizontal teardrop (pointing toward flow direction)
+            # Create using a small triangle pointing right
+            return [shapes.Triangle(
+                int(self.x + 3), int(self.y),      # Point (tip of teardrop)
+                int(self.x - 2), int(self.y - 2),  # Bottom left (wider back)
+                int(self.x - 2), int(self.y + 2),  # Top left (wider back)
+                color=tuple(color), batch=batch
+            )]
         
         elif self.element_type == "WIND":
-            # Small horizontal line (dash)
-            return [shapes.Line(int(self.x-3), int(self.y), int(self.x+3), int(self.y), 
-                            thickness=2, color=tuple(color), batch=batch)]
+            # Enhanced 3-segment S-curve for wind flow
+            line1 = shapes.Line(
+                int(self.x - 4), int(self.y - 2),
+                int(self.x - 1), int(self.y),
+                thickness=2, color=tuple(color), batch=batch
+            )
+            line2 = shapes.Line(
+                int(self.x - 1), int(self.y),
+                int(self.x + 1), int(self.y),
+                thickness=2, color=tuple(color), batch=batch
+            )
+            line3 = shapes.Line(
+                int(self.x + 1), int(self.y),
+                int(self.x + 4), int(self.y - 2),
+                thickness=2, color=tuple(color), batch=batch
+            )
+            return [line1, line2, line3]
         
         elif self.element_type == "EARTH":
             # Small square
