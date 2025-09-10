@@ -1,6 +1,7 @@
 import pyglet
 import time
 import os
+import librosa
 
 from config.settings          import Settings
 from audio                    import AudioAnalyzer, AudioPlayer
@@ -10,6 +11,8 @@ from network.network_manager  import NetworkManager
 from ui.ui_manager            import UIManager
 from visual.visual_manager    import VisualManager
 from utils.file_manager       import FileManager
+
+from video.video_effects_manager import VideoEffectsManager
 
 
 class MIDIVisualizer(pyglet.window.Window):
@@ -26,6 +29,7 @@ class MIDIVisualizer(pyglet.window.Window):
         self.batch = pyglet.graphics.Batch()
         self.ui_batch = pyglet.graphics.Batch()
         self.grid_batch = pyglet.graphics.Batch()
+        self.video_batch = pyglet.graphics.Batch()
         
         # Instantitate the audio analyzer class
         self.audio_analyzer = AudioAnalyzer()
@@ -48,6 +52,9 @@ class MIDIVisualizer(pyglet.window.Window):
         # Instantiate the visual manager class
         self.visual_manager = VisualManager(self.width, self.height, self.grid_batch)        
 
+        # Instantiate the video effects manager class
+        self.video_effects_manager = VideoEffectsManager(self.width, self.height, self.video_batch)
+
         self.start_time = None
         self.playing = False
         
@@ -61,6 +68,8 @@ class MIDIVisualizer(pyglet.window.Window):
         # Update loop
         pyglet.clock.schedule_interval(self.update, 1/60.0)
         
+        self.total_audio_duration = None
+
         print("🌟 Odin & Elements MIDI Visualizer initialized")
     
     def update(self, dt):
@@ -86,8 +95,12 @@ class MIDIVisualizer(pyglet.window.Window):
             self.network_manager.update_particles(dt)
             self.network_manager.update_odin_from_elements(self.midi_processor, self.audio_analyzer, dt)
 
-            # Update visual effects
+            # Update visual effects (background patterns, etc.)
             self.visual_manager.update_effects(dt, total_activity)
+            
+            # Update video effects (fades, transitions, etc.)
+            elapsed_time = audio_time if self.playing else 0.0
+            self.video_effects_manager.update_effects(elapsed_time)
 
             # Update UI
             self.ui_manager.update_ui(
@@ -109,25 +122,18 @@ class MIDIVisualizer(pyglet.window.Window):
             print(f"❌ Update error: {e}")
             traceback.print_exc()
     
-
-    
     def on_draw(self):
         self.clear()
         
         # Background with activity-based intensity
-
-        # Dark background
-        # bg_intensity = max(0, min(0.3, self.background_intensity * 0.15))
-        # pyglet.gl.glClearColor(bg_intensity, bg_intensity, bg_intensity + 0.02, 1.0)
-        
-        # Whiter background
-        bg_intensity = 0.98 + max(0, min(0.08, self.background_intensity * 0.15))  # Was 0.85, now 0.92-1.0 range
+        bg_intensity = 0.98 + max(0, min(0.08, self.background_intensity * 0.15))
         pyglet.gl.glClearColor(bg_intensity, bg_intensity, bg_intensity, 1.0)
         
-        # Draw everything
-        self.grid_batch.draw()
-        self.batch.draw()
-        self.ui_batch.draw()
+        # Draw everything in proper layer order
+        self.grid_batch.draw()      # Background grid
+        self.batch.draw()           # Main content (nodes, particles)
+        self.ui_batch.draw()        # UI panels
+        self.video_batch.draw()     # Video effects (fades, overlays) - LAST
     
     def on_key_press(self, symbol, _modifiers):
         try:
@@ -180,7 +186,11 @@ class MIDIVisualizer(pyglet.window.Window):
                         print("⚠️  Stop playback first (R to restart, then V, then SPACE)")
                 else:
                     self.video_recorder.stop_recording()
-            
+            elif symbol == pyglet.window.key.F:
+                # Toggle fade effects
+                current_state = self.video_effects_manager.fade_controller.fade_enabled
+                self.video_effects_manager.enable_fade(not current_state)
+                print(f"{'✅' if not current_state else '🚫'} Fade effects {'enabled' if not current_state else 'disabled'}")
             elif symbol == pyglet.window.key.ESCAPE:
                 self.close()
             elif symbol == pyglet.window.key.L:
@@ -223,6 +233,16 @@ class MIDIVisualizer(pyglet.window.Window):
                 print("❌ Failed to load audio file")
             else:
                 print(f"✅ Loaded audio: {os.path.basename(audio_path)}")
+                # Get audio duration and set for video effects
+                try:
+                    y, sr = librosa.load(audio_path, sr=None)
+                    duration = librosa.get_duration(y=y, sr=sr)
+                    self.total_audio_duration = duration
+                    self.video_effects_manager.set_total_duration(duration)
+                    print(f"✅ Audio duration: {duration:.1f}s (video effects timing set)")
+                except Exception as e:
+                    print(f"⚠️  Could not get audio duration: {e}")
+
                 # Setup audio analyzer with the loaded audio
                 if self.audio_analyzer.setup_audio_capture(self.audio_player.get_audio_source()):
                     print(f"✅ Audio capture enabled: {self.audio_analyzer.sample_rate}Hz, {self.audio_analyzer.channels} channels")
@@ -247,7 +267,8 @@ class MIDIVisualizer(pyglet.window.Window):
         print("\nControls:")
         print("  SPACE - Play/Pause")
         print("  R - Restart")
-        print("  V - Start/Stop video recording") 
+        print("  V - Start/Stop video recording")
+        print("  F - Toggle fade effects")
         print("  ESC - Exit")
         print("\nWorkflow:")
         print("  1. Press V (start recording)")
