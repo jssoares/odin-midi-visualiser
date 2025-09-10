@@ -1,7 +1,8 @@
 import time
 import math
-from pyglet import text
+from pyglet        import text
 from visual.shapes import ElementalShape
+from config        import ELEMENT_REGISTRY
 
 class ElementalNode:
     """Enhanced node class for elements with audio-reactive shapes"""
@@ -51,77 +52,10 @@ class ElementalNode:
         
     def get_note_color_for_element(self, note):
         """Generate element-specific color gradients based on MIDI note"""
-        note_in_octave = note % 12  # 0-11 for C, C#, D, D#, E, F, F#, G, G#, A, A#, B
-        
-        if self.element_type == "EARTH":
-            # Earth gradient: Brown → Dark Orange (updated with orange tones)
-            gradient_colors = [
-                [139, 69, 19],    # Dark brown (C)
-                [150, 75, 20],    # 
-                [160, 80, 25],    # 
-                [170, 85, 30],    # 
-                [180, 90, 35],    # Brown-orange (E)
-                [190, 85, 25],    # 
-                [200, 80, 15],    # 
-                [210, 75, 10],    # 
-                [220, 70, 5],     # Dark orange (G#)
-                [200, 65, 15],    # 
-                [180, 60, 25],    # 
-                [160, 55, 35]     # Back to brown-orange (B)
-            ]
-        elif self.element_type == "WIND":
-            # Wind gradient: Sky Blue → Darker Cyan (no white)
-            gradient_colors = [
-                [135, 206, 235],  # Sky blue (C)
-                [120, 200, 230],  # 
-                [105, 195, 225],  # 
-                [90, 190, 220],   # 
-                [75, 185, 215],   # Darker cyan (E)
-                [85, 180, 210],   # 
-                [95, 175, 205],   # 
-                [105, 170, 200],  # 
-                [115, 165, 195],  # Medium cyan (G#)
-                [125, 160, 190],  # 
-                [135, 155, 185],  # 
-                [145, 150, 180]   # Darkest blue-grey (B)
-            ]
-        elif self.element_type == "FIRE":
-            # Fire gradient: Deep Red → Bright Red → Orange → Yellow (more fiery)
-            gradient_colors = [
-                [180, 0, 0],      # Deep red (C)
-                [200, 10, 0],     # 
-                [220, 20, 0],     # 
-                [240, 30, 0],     # 
-                [255, 40, 0],     # Bright red (E)
-                [255, 60, 0],     # 
-                [255, 80, 0],     # 
-                [255, 100, 0],    # 
-                [255, 120, 0],    # Orange (G#)
-                [255, 140, 10],   # 
-                [255, 160, 20],   # 
-                [255, 180, 30]    # Bright orange-yellow (B)
-            ]
-        elif self.element_type == "WATER":
-            # Water gradient: Deep Blue → Medium Blue (no light colors)
-            gradient_colors = [
-                [0, 191, 255],    # Deep blue (C)
-                [10, 185, 250],   # 
-                [20, 180, 245],   # 
-                [30, 175, 240],   # 
-                [40, 170, 235],   # Medium blue (E)
-                [35, 165, 230],   # 
-                [30, 160, 225],   # 
-                [25, 155, 220],   # 
-                [20, 150, 215],   # Darker blue (G#)
-                [15, 145, 210],   # 
-                [10, 140, 205],   # 
-                [5, 135, 200]     # Darkest blue (B)
-            ]
-        else:
-            # Fallback
-            gradient_colors = [self.base_color] * 12
-        
-        return gradient_colors[note_in_octave]
+        element_config = ELEMENT_REGISTRY.get_element(self.element_type)
+        if element_config:
+            return element_config.get_note_color(note)
+        return self.base_color
     
     def update_gradient_color(self):
         """Update the gradient color based on active MIDI notes"""
