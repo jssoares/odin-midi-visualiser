@@ -1,7 +1,8 @@
 import math
 import random
+from config           import ELEMENT_REGISTRY
 from config.settings  import Settings
-from visual.particles import ElementalParticle, WaterParticle
+from visual.emitters  import EmitterFactory
 from nodes            import OdinNode, ElementalNode, Connection
 
 class NetworkManager:
@@ -13,9 +14,6 @@ class NetworkManager:
         self.window_height = window_height
 
         self.visualizer_ref = visualizer_ref
-
-        self.water_emission_cooldown = 0.0
-        self.water_emission_interval = 0.1  # Emit every 0.1 seconds (10 particles per second)
 
         # Network
         self.nodes = []
@@ -29,6 +27,12 @@ class NetworkManager:
         # Create the network immediately
         self.create_network()
 
+        self.emitters = {}
+        for element_node in self.channel_nodes.values():
+            element_type = element_node.element_type
+            self.emitters[element_type] = EmitterFactory.create_emitter(element_type, element_node, self.batch)
+
+
     def create_network(self):
         center_x, center_y = self.window_width // 2, self.window_height // 2
         
@@ -36,17 +40,18 @@ class NetworkManager:
         self.odin_node = OdinNode(center_x, center_y, 0, self.batch, instrument_channel=None)
         self.nodes.append(self.odin_node)
 
-        for i, (offset_x, offset_y, channel, name, color) in enumerate(Settings.ELEMENT_DEFINITIONS):
-            x = center_x + (offset_x * Settings.SATELLITE_DISTANCE)
-            y = center_y + (offset_y * Settings.SATELLITE_DISTANCE)
+        for element_config in ELEMENT_REGISTRY.get_all_elements():
+            x, y = element_config.get_world_position(center_x, center_y, Settings.SATELLITE_DISTANCE)
             
             element_node = ElementalNode(
-                x, y, i + 1, self.batch, instrument_channel=channel, 
-                element_type=name, element_color=color
+                x, y, element_config.channel + 1, self.batch, 
+                instrument_channel=element_config.channel,
+                element_type=element_config.name, 
+                element_color=element_config.base_color
             )
             element_node.visualizer_ref = self.visualizer_ref
             self.nodes.append(element_node)
-            self.channel_nodes[channel] = element_node
+            self.channel_nodes[element_config.channel] = element_node
         
         # Connections - each element connects to Odin
         for i in range(1, 5):
@@ -88,132 +93,20 @@ class NetworkManager:
                 # Get element type to determine how pan affects emission
                 element_type = element_node.element_type
 
-                # NEW: Base emission on frequency activity
+                # Get element's audio data
                 element_freq_level = audio_analyzer.element_frequency_levels.get(element_type, 0.0)
-                emission_probability = 0.1 + (element_freq_level * 0.4)  # 0.1 to 0.5 range
-                # Handle WATER emission separately with controlled rate
-                if element_type == "WATER":
-                    # Update cooldown timer
-                    self.water_emission_cooldown -= dt
-                    
-                    # Emit only when cooldown reaches zero
-                    if self.water_emission_cooldown <= 0:
-                        element_pos = element_node.get_current_position()
-                        odin_pos = self.odin_node.get_current_position()
-                        
-                        # Create larger droplet clusters for thicker stream
-                        cluster_size = random.choice([4, 5, 6])  # Increased from [2, 3, 4]
-                        for i in range(cluster_size):
-                            # Organic droplet spacing with wider spread for thickness
-                            angle_spread = random.uniform(-25, 25)  # Increased from ±15 to ±25 degrees
-                            distance_from_source = random.uniform(1, 12)  # Increased max from 8 to 12
-                            
-                            # Calculate organic position with angular variation
-                            base_angle = math.atan2(odin_pos[1] - element_node.original_y, 
-                                                odin_pos[0] - element_node.original_x)
-                            varied_angle = base_angle + math.radians(angle_spread)
-                            
-                            droplet_start_pos = (
-                                element_node.original_x + math.cos(varied_angle) * distance_from_source,
-                                element_node.original_y + math.sin(varied_angle) * distance_from_source
-                            )
-                            
-                            water_particle = WaterParticle(
-                                droplet_start_pos, odin_pos, element_node.color,
-                                self.batch, self.odin_node, (0, 0)
-                            )
+                element_pan = audio_analyzer.element_panning.get(element_type, 0.0)
 
-                            # Override the curve properties for stream behavior
-                            water_particle.curve_intensity = random.uniform(0.2, 0.4)
-                            water_particle.curve_start_time = random.uniform(0.8, 1.4)
-                            water_particle.speed = random.uniform(55, 80)
-                            water_particle.stream_alignment_strength = random.uniform(0.4, 0.8)
+                # Use the emitter for this element type
+                emitter = self.emitters[element_type]
+                emitter.update_cooldown(dt)
 
-                            self.particles.append(water_particle)
-                        
-                        # Faster emission for denser stream
-                        self.water_emission_cooldown = random.uniform(0.04, 0.08)  # Increased frequency
-                elif random.random() < emission_probability:
-                    element_pos = element_node.get_current_position()
+                # Get emission probability and emit if appropriate
+                emission_prob = emitter.get_emission_probability(element_freq_level, activity)
+                if random.random() < emission_prob:
                     odin_pos = self.odin_node.get_current_position()
-                    
-                    # Get this element's individual panning
-                    element_pan = 0.0
-                    if element_type in audio_analyzer.element_panning:
-                        element_pan = audio_analyzer.element_panning[element_type]
-                    
-                    # Add subtle random movement to emitters
-                    subtle_offset_x = random.uniform(-8, 8)  # ±8 pixels random movement
-                    subtle_offset_y = random.uniform(-8, 8)  # ±8 pixels random movement
-                    
-                    if element_type == "FIRE" or element_type == "EARTH":  # North/South elements
-                        # Get this element's individual panning
-                        element_pan = 0.0
-                        if element_type in audio_analyzer.element_panning:
-                            element_pan = audio_analyzer.element_panning[element_type]
-                        
-                        # Calculate LEFT and RIGHT emitter positions with subtle movement
-                        left_emitter_pos = (element_pos[0] - 30 + subtle_offset_x, element_pos[1] + subtle_offset_y)
-                        right_emitter_pos = (element_pos[0] + 30 + subtle_offset_x, element_pos[1] + subtle_offset_y)
-                        
-                        # Calculate emission probabilities based on stereo panning
-                        # Pan ranges from -1.0 (left) to +1.0 (right)
-                        if element_pan < -0.1:  # Panned left
-                            left_probability = 0.9   # High chance from left
-                            right_probability = 0.1  # Low chance from right
-                        elif element_pan > 0.1:  # Panned right
-                            left_probability = 0.1   # Low chance from left
-                            right_probability = 0.9  # High chance from right
-                        else:  # Center or no panning
-                            left_probability = 0.5   # Equal chance from both sides
-                            right_probability = 0.5
-                        
-                            # LEFT EMITTER
-                            if random.random() < left_probability:
-                                left_particle = ElementalParticle(
-                                    left_emitter_pos, odin_pos, element_node.color, 
-                                    self.batch, self.odin_node, (0, 0), 
-                                    emission_direction=(-1, 0),  # Emit westward
-                                    element_type=element_node.element_type,
-                                )
-                                self.particles.append(left_particle)
+                    emitter.emit_particles(odin_pos, self.particles, element_pan)
 
-                            # RIGHT EMITTER
-                            if random.random() < right_probability:
-                                right_particle = ElementalParticle(
-                                    right_emitter_pos, odin_pos, element_node.color, 
-                                    self.batch, self.odin_node, (0, 0),
-                                    emission_direction=(1, 0),  # Emit eastward
-                                    element_type=element_node.element_type,
-                                )
-                                self.particles.append(right_particle)
-                            
-                    elif element_type == "WIND":  # East/West elements
-                        # Calculate TOP and BOTTOM emitter positions with subtle movement
-                        top_emitter_pos = (element_pos[0] + subtle_offset_x, element_pos[1] + 23 + subtle_offset_y)
-                        bottom_emitter_pos = (element_pos[0] + subtle_offset_x, element_pos[1] - 18 + subtle_offset_y)
-                        
-                        # Calculate emission probabilities
-                        top_probability = max(0.2, 0.8 - element_pan)
-                        bottom_probability = max(0.2, 0.8 + element_pan)
-                        
-                        # TOP EMITTER
-                        if random.random() < top_probability:
-                            top_particle = ElementalParticle(
-                                top_emitter_pos, odin_pos, element_node.color, 
-                                self.batch, self.odin_node, (0, 0),
-                                element_type=element_node.element_type,
-                            )
-                            self.particles.append(top_particle)
-                        
-                        # BOTTOM EMITTER
-                        if random.random() < bottom_probability:
-                            bottom_particle = ElementalParticle(
-                                bottom_emitter_pos, odin_pos, element_node.color, 
-                                self.batch, self.odin_node, (0, 0),
-                                element_type=element_node.element_type,
-                            )
-                            self.particles.append(bottom_particle)
                 
                 # Calculate force from this element on Odin
                 # Each active element "pushes" Odin away from its original position

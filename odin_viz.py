@@ -69,7 +69,7 @@ class MIDIVisualizer(pyglet.window.Window):
             audio_time = self.audio_player.get_current_time()
             # Process MIDI if playing
             if self.playing:    
-                if self.playing and self.audio_analyzer.audio_stft_left is not None:
+                if self.playing and self.audio_analyzer.audio_data is not None:
                     self.audio_analyzer.get_element_frequency_levels_and_panning(audio_time)
                 
                 self.midi_processor.process_midi_events(audio_time, self.network_manager.channel_nodes, self.network_manager.connections)
