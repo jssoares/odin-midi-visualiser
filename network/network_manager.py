@@ -1,7 +1,7 @@
 import math
 import random
 from config.settings  import Settings
-from visual.particles import ElementalParticle
+from visual.particles import ElementalParticle, WaterParticle
 from nodes            import OdinNode, ElementalNode, Connection
 
 class NetworkManager:
@@ -118,18 +118,17 @@ class NetworkManager:
                                 element_node.original_y + math.sin(varied_angle) * distance_from_source
                             )
                             
-                            water_particle = ElementalParticle(
+                            water_particle = WaterParticle(
                                 droplet_start_pos, odin_pos, element_node.color,
-                                self.batch, self.odin_node, (0, 0),
-                                element_type=element_node.element_type,
+                                self.batch, self.odin_node, (0, 0)
                             )
-                            
-                            # Organic water properties - each droplet slightly different
+
+                            # Override the curve properties for stream behavior
                             water_particle.curve_intensity = random.uniform(0.2, 0.4)
                             water_particle.curve_start_time = random.uniform(0.8, 1.4)
                             water_particle.speed = random.uniform(55, 80)
                             water_particle.stream_alignment_strength = random.uniform(0.4, 0.8)
-                            
+
                             self.particles.append(water_particle)
                         
                         # Faster emission for denser stream
